@@ -25,7 +25,7 @@ checks, marking each as covered, partial, or a gap, and attribute coverage to wh
 tooling the customer actually runs. Export a findings CSV for reporting, or save the
 session as JSON to resume later.
 
-[![Open the Monitoring Discovery Tool](https://img.shields.io/badge/Open-Monitoring%20Discovery%20Tool-CC092F?style=for-the-badge)](./tools/mo_discovery.html)
+[![Open the Monitoring Discovery Tool](https://img.shields.io/badge/Open-Monitoring%20Discovery%20Tool-CC092F?style=for-the-badge)](./tools/Monitoring-Observability-Discovery.html)
 
 <!--## Contents
 - [Scripts](./scripts)
