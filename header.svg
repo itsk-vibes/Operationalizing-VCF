@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 180" width="1200" height="180" role="img" aria-label="Operationalizing VCF">
+  <title>Operationalizing VCF</title>
+
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0f17"/>
+      <stop offset="60%" stop-color="#0c1320"/>
+      <stop offset="100%" stop-color="#0a1a20"/>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="0.82" cy="0.35" r="0.55">
+      <stop offset="0%" stop-color="#007B8C" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#007B8C" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#007B8C" stop-opacity="0"/>
+      <stop offset="35%" stop-color="#3fd0e0" stop-opacity="0.9"/>
+      <stop offset="65%" stop-color="#3fd0e0" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#007B8C" stop-opacity="0"/>
+    </linearGradient>
+
+    <linearGradient id="fade" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0a0f17" stop-opacity="1"/>
+      <stop offset="12%" stop-color="#0a0f17" stop-opacity="0"/>
+      <stop offset="88%" stop-color="#0a0f17" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#0a1a20" stop-opacity="1"/>
+    </linearGradient>
+
+    <pattern id="dots" width="34" height="34" patternUnits="userSpaceOnUse">
+      <circle cx="1.2" cy="1.2" r="1.2" fill="#3fd0e0"/>
+    </pattern>
+
+    <clipPath id="frame">
+      <rect x="0" y="0" width="1200" height="180"/>
+    </clipPath>
+
+    <style>
+      .drift  { animation: drift 34s linear infinite; }
+      .scroll { animation: scroll 44s linear infinite; }
+      .sweep  { animation: sweep 11s ease-in-out infinite; }
+      .blip   { animation: blip 3.4s ease-out infinite; transform-origin: 240px 84px; }
+
+      @keyframes drift  { to { transform: translateX(-34px); } }
+      @keyframes scroll { to { transform: translateX(-600px); } }
+      @keyframes sweep  { 0%, 100% { opacity: 0.25; } 50% { opacity: 0.75; } }
+      @keyframes blip {
+        0%   { transform: scale(0.6); opacity: 0.75; }
+        70%  { transform: scale(3.2); opacity: 0; }
+        100% { transform: scale(3.2); opacity: 0; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .drift, .scroll, .sweep, .blip { animation: none; }
+      }
+    </style>
+  </defs>
+
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="180" fill="url(#bg)"/>
+    <rect width="1200" height="180" fill="url(#glow)"/>
+
+    <g class="drift" opacity="0.10">
+      <rect x="-34" y="0" width="1268" height="180" fill="url(#dots)"/>
+    </g>
+
+    <!-- telemetry trace, two identical tiles scrolling for a seamless loop -->
+    <g class="scroll" opacity="0.55">
+      <g>
+        <path d="M0,130 L40,130 L60,112 L90,118 L120,96 L150,104 L180,88 L210,100 L240,84 L270,118 L300,110 L330,126 L360,104 L390,116 L420,92 L450,108 L480,98 L510,122 L540,114 L570,124 L600,130"
+              fill="none" stroke="#3fd0e0" stroke-width="1.6" stroke-opacity="0.55"
+              stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="240" cy="84" r="2.6" fill="#CC092F"/>
+        <circle class="blip" cx="240" cy="84" r="2.6" fill="none" stroke="#CC092F" stroke-width="1"/>
+      </g>
+      <g transform="translate(600,0)">
+        <path d="M0,130 L40,130 L60,112 L90,118 L120,96 L150,104 L180,88 L210,100 L240,84 L270,118 L300,110 L330,126 L360,104 L390,116 L420,92 L450,108 L480,98 L510,122 L540,114 L570,124 L600,130"
+              fill="none" stroke="#3fd0e0" stroke-width="1.6" stroke-opacity="0.55"
+              stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="240" cy="84" r="2.6" fill="#CC092F"/>
+      </g>
+      <g transform="translate(1200,0)">
+        <path d="M0,130 L40,130 L60,112 L90,118 L120,96 L150,104"
+              fill="none" stroke="#3fd0e0" stroke-width="1.6" stroke-opacity="0.55"
+              stroke-linejoin="round" stroke-linecap="round"/>
+      </g>
+    </g>
+
+    <rect width="1200" height="180" fill="url(#fade)"/>
+
+    <text x="48" y="76"
+          font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif"
+          font-size="34" font-weight="700" letter-spacing="7" fill="#e6edf3">OPERATIONALIZING VCF</text>
+
+    <rect class="sweep" x="48" y="92" width="230" height="1.5" fill="url(#rule)"/>
+
+    <text x="49" y="122"
+          font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace"
+          font-size="14" letter-spacing="1.5" fill="#8b949e">notes, scripts, and frameworks for VMware Cloud Foundation 9.1</text>
+
+    <rect x="0" y="178.5" width="1200" height="1.5" fill="#007B8C" opacity="0.45"/>
+  </g>
+</svg>
