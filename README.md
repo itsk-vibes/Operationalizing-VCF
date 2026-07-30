@@ -1,7 +1,15 @@
+<img src="./assets/header.svg" alt="Operationalizing VCF" width="100%">
+
+This repo will serve as a collection of notes, scripts, and frameworks to help operationalize a VMware Cloud Foundation 9.1 environment.
+
+<img src="./assets/divider.svg" alt="" width="100%">
+
+<!--## VCF Adoption Tracker
+
 # Overview
 
 This repo will serve as a collection of notes, scripts, and frameworks to help operationalize a VMware Cloud Foundation 9.1 enviornment.
-
+-->
 
 
 ## VCF Adoption Tracker
@@ -11,6 +19,7 @@ An interactive HTML page for tracking VCF adoption and use cases across organiza
 [![Open the VCF Adoption Tracker](https://img.shields.io/badge/Open-VCF%20Adoption%20Tracker-007B8C?style=for-the-badge)](./tools/VCF_Adoption_Tracker_v1.html)
 <!--[Open the tracker](./tools/VCF_Adoption_Tracker_v1.html)-->
 
+<img src="./assets/divider.svg" alt="" width="100%">
 
 ## Monitoring and Observability
 
