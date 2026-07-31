@@ -36,3 +36,11 @@ A framework and discovery tool for standing up meaningful alerting and dashboard
 A framework and discovery tool for turning VCF 9 alerts into tracked, owned incidents. The discovery tool is an interactive HTML page for assessing how far a customer has got. Step through 47 checks across the pipeline, ITSM integration, escalation model, response playbooks, and notification rule strategy, marking each as in place, partial, or a gap, and attribute coverage to whatever tooling the customer actually runs.
 
 [![Open the Incident Management Discovery Tool](https://img.shields.io/badge/Open-Incident%20Management%20Discovery%20Tool-A96A05?style=for-the-badge)](./tools/Incident-Management-Discovery.html)
+
+<img src="./assets/divider.svg" alt="" width="100%">
+
+## Lifecycle Management
+
+A framework and discovery tool for keeping the platform current and secure through patching, password, and certificate management. The discovery tool is an interactive HTML page for assessing how far a customer has got. Step through 48 checks across the depot and Bill of Materials foundation, patching and upgrades, password management, certificate management, and operating cadence, marking each as in place, partial, or a gap, and attribute coverage to whatever tooling the customer actually runs. 
+
+[![Open the Lifecycle Management Discovery Tool](https://img.shields.io/badge/Open-Lifecycle%20Management%20Discovery%20Tool-5B3E90?style=for-the-badge)](./tools/Lifecycle-Management-Discovery.html)
