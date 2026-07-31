@@ -1,6 +1,6 @@
 <img src="./assets/header.svg" alt="Operationalizing VCF" width="100%">
 <div align="right">
-<sub>Owner: INSERT_Owner_Name</sub>
+<sub>Owner: Kunthaka Nilaweera</sub>
 </div>
 <br>
 This repo will serve as a collection of notes, scripts, and frameworks to help operationalize a VMware Cloud Foundation 9.1 environment.
