@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VCF 9 Lifecycle Management: Discovery</title>
+<style>
+:root{
+  --ink:#0E1420;
+  --ink-soft:#3A4557;
+  --muted:#6B7788;
+  --line:#DDE2EA;
+  --line-soft:#EBEEF3;
+  --surface:#F4F6F9;
+  --panel:#FFFFFF;
+  --brand:#5B3E90;
+  --covered:#137A4B;
+  --covered-bg:#E6F3EC;
+  --partial:#A96A05;
+  --partial-bg:#FBF0DE;
+  --gap:#B62020;
+  --gap-bg:#FBE9E9;
+  --na:#7A8798;
+  --na-bg:#EEF1F5;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--ui);
+  background:var(--surface);
+  color:var(--ink);
+  font-size:15px;
+  line-height:1.5;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1020px;margin:0 auto;padding:0 20px}
+
+/* ---------- header ---------- */
+header{
+  position:sticky;top:0;z-index:50;
+  background:var(--ink);
+  color:#fff;
+  border-bottom:3px solid var(--brand);
+}
+.head-top{display:flex;align-items:center;gap:14px;padding:14px 0 12px}
+.mark{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:#fff;background:var(--brand);padding:4px 8px;border-radius:2px;white-space:nowrap;
+}
+.head-title{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.head-sub{font-size:12px;color:#9AA7B8;margin-top:1px}
+.head-acct{margin-left:auto;text-align:right;font-size:12px;color:#9AA7B8;max-width:40%}
+.head-acct b{display:block;color:#fff;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.posture{display:flex;height:8px;border-radius:2px;overflow:hidden;background:#232C3B;margin-bottom:10px}
+.posture i{display:block;height:100%;transition:width .35s cubic-bezier(.4,0,.2,1)}
+.posture i.c{background:#2FA36B}
+.posture i.p{background:#D9A03C}
+.posture i.g{background:#E05252}
+.posture i.n{background:#4A5566}
+
+.steps{display:flex;gap:4px;overflow-x:auto;padding-bottom:12px;scrollbar-width:none}
+.steps::-webkit-scrollbar{display:none}
+.steps button{
+  flex:0 0 auto;background:transparent;border:1px solid #2B3546;color:#9AA7B8;
+  font-family:var(--ui);font-size:12px;font-weight:500;padding:6px 11px;border-radius:99px;
+  cursor:pointer;transition:.15s;white-space:nowrap;
+}
+.steps button:hover{color:#fff;border-color:#42506A}
+.steps button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+.steps button.done{color:#CFD8E4;border-color:#3C475C}
+.steps button:focus-visible{outline:2px solid #fff;outline-offset:2px}
+
+/* ---------- step body ---------- */
+main{padding:32px 0 120px}
+.step{display:none;animation:fade .25s ease}
+.step.on{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.step{animation:none}.posture i{transition:none}}
+
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brand);font-weight:600;margin-bottom:8px;
+}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.02em;margin:0 0 10px;font-weight:650}
+h2{font-size:16px;margin:28px 0 10px;font-weight:650;letter-spacing:-.01em}
+.lede{color:var(--ink-soft);font-size:15px;max-width:72ch;margin:0 0 24px}
+
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px;margin-bottom:16px}
+.note{
+  background:#F6F3FB;border-left:3px solid var(--brand);border-radius:0 4px 4px 0;
+  padding:12px 14px;font-size:13.5px;color:var(--ink-soft);margin:16px 0;
+}
+.note b{color:var(--ink)}
+
+/* form fields */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media(max-width:720px){.grid2,.grid3{grid-template-columns:1fr}}
+label.f{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:5px;letter-spacing:.01em}
+input[type=text],input[type=date],select,textarea{
+  width:100%;font-family:var(--ui);font-size:14px;color:var(--ink);
+  background:#fff;border:1px solid var(--line);border-radius:4px;padding:8px 10px;
+}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px;border-color:var(--brand)}
+textarea{resize:vertical;min-height:70px}
+
+/* ---------- checklist ---------- */
+.item{
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:14px 16px;margin-bottom:8px;transition:border-color .15s;
+}
+.item.set{border-left:3px solid var(--line)}
+.item.s-covered{border-left-color:var(--covered)}
+.item.s-partial{border-left-color:var(--partial)}
+.item.s-gap{border-left-color:var(--gap)}
+.item.s-na{border-left-color:var(--na);opacity:.72}
+.item-head{display:flex;gap:12px;align-items:flex-start}
+.iid{font-family:var(--mono);font-size:11px;color:var(--muted);padding-top:3px;flex:0 0 46px;letter-spacing:.02em}
+.itext{flex:1;font-size:14.5px;line-height:1.45}
+.ihint{display:block;font-size:12.5px;color:var(--muted);margin-top:4px}
+.tag{
+  display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-left:8px;vertical-align:2px;
+  background:var(--na-bg);color:var(--na);font-weight:600;
+}
+.tag.p1{background:#FBE9E9;color:var(--gap)}
+.tag.ph2{background:#EDE8F7;color:var(--brand)}
+
+.opts{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.opts button{
+  font-family:var(--ui);font-size:12.5px;font-weight:600;padding:5px 12px;border-radius:99px;
+  border:1px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;transition:.12s;
+}
+.opts button:hover{border-color:var(--ink-soft);color:var(--ink)}
+.opts button:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.opts button.on[data-v=covered]{background:var(--covered-bg);border-color:var(--covered);color:var(--covered)}
+.opts button.on[data-v=partial]{background:var(--partial-bg);border-color:var(--partial);color:var(--partial)}
+.opts button.on[data-v=gap]{background:var(--gap-bg);border-color:var(--gap);color:var(--gap)}
+.opts button.on[data-v=na]{background:var(--na-bg);border-color:var(--na);color:var(--na)}
+.tooling{margin-top:10px;display:none}
+.item.set .tooling{display:block}
+.tooling input{font-size:13px;padding:6px 9px}
+
+.sec-head{
+  display:flex;align-items:baseline;gap:10px;margin:26px 0 10px;
+  padding-bottom:6px;border-bottom:1px solid var(--line);
+}
+.sec-head h3{margin:0;font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+.sec-head span{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-left:auto}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+th{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;border-bottom:1px solid var(--line)}
+td input{padding:5px 8px;font-size:13px}
+
+/* ---------- legend ---------- */
+.legend{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:720px){.legend{grid-template-columns:1fr 1fr}}
+.lg{border:1px solid var(--line);border-radius:5px;padding:12px;background:#fff}
+.lg b{display:block;font-size:13px;margin-bottom:3px}
+.lg span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.lg.c{border-top:3px solid var(--covered)}
+.lg.p{border-top:3px solid var(--partial)}
+.lg.g{border-top:3px solid var(--gap)}
+.lg.n{border-top:3px solid var(--na)}
+
+/* ---------- findings ---------- */
+.scores{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:22px}
+@media(max-width:820px){.scores{grid-template-columns:1fr 1fr}}
+.score{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px}
+.score .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.score .v{font-size:30px;font-weight:700;letter-spacing:-.03em;margin:6px 0 2px;font-variant-numeric:tabular-nums}
+.score .d{font-size:12px;color:var(--muted)}
+.bar{height:5px;background:var(--line-soft);border-radius:99px;overflow:hidden;margin-top:9px}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:99px}
+
+.finding{border:1px solid var(--line);border-left-width:3px;border-radius:5px;background:#fff;padding:12px 14px;margin-bottom:8px}
+.finding.p1{border-left-color:var(--gap)}
+.finding.p2{border-left-color:var(--partial)}
+.finding.p3{border-left-color:var(--na)}
+.finding .fh{display:flex;gap:10px;align-items:baseline}
+.finding .fid{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.finding .ft{font-size:14px;flex:1}
+.finding .fm{font-size:12.5px;color:var(--muted);margin-top:4px}
+.pill{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:2px 7px;border-radius:3px}
+.pill.p1{background:var(--gap-bg);color:var(--gap)}
+.pill.p2{background:var(--partial-bg);color:var(--partial)}
+.pill.p3{background:var(--na-bg);color:var(--na)}
+
+.alarm{
+  background:#FBE9E9;border:1px solid #F0C9C9;border-left:3px solid var(--gap);
+  border-radius:0 5px 5px 0;padding:14px 16px;margin:0 0 20px;
+}
+.alarm b{color:var(--gap);display:block;margin-bottom:5px;font-size:14px}
+.alarm ul{margin:6px 0 0;padding-left:18px;font-size:13.5px;color:var(--ink-soft)}
+.ok{
+  background:var(--covered-bg);border:1px solid #C6E4D3;border-left:3px solid var(--covered);
+  border-radius:0 5px 5px 0;padding:14px 16px;margin:0 0 20px;font-size:13.5px;color:var(--ink-soft);
+}
+.ok b{color:var(--covered);display:block;margin-bottom:4px;font-size:14px}
+
+/* ---------- footer nav ---------- */
+.footnav{
+  position:fixed;left:0;right:0;bottom:0;z-index:40;
+  background:rgba(255,255,255,.94);backdrop-filter:blur(8px);
+  border-top:1px solid var(--line);
+}
+.footnav .wrap{display:flex;align-items:center;gap:10px;padding-top:11px;padding-bottom:11px}
+.btn{
+  font-family:var(--ui);font-size:13.5px;font-weight:600;padding:8px 16px;border-radius:5px;
+  border:1px solid var(--line);background:#fff;color:var(--ink-soft);cursor:pointer;transition:.15s;
+}
+.btn:hover{border-color:var(--ink-soft);color:var(--ink)}
+.btn:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.pri:hover{background:#4B3179;border-color:#4B3179;color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.progress{margin-left:auto;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;text-align:right}
+.progress b{color:var(--ink)}
+
+.credit{
+  margin-top:36px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);
+}
+.credit b{color:var(--ink-soft)}
+.credit a{color:var(--brand);text-decoration:none}
+.credit a:hover{text-decoration:underline}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="head-top">
+      <span class="mark">VCF 9.1 LCM</span>
+      <div>
+        <div class="head-title">Lifecycle Management Discovery</div>
+        <div class="head-sub">Patching, passwords, and certificates</div>
+      </div>
+      <div class="head-acct"><b id="hAcct">No account set</b><span id="hDate">Step 1 of 8</span></div>
+    </div>
+    <div class="posture" title="Coverage posture">
+      <i class="c" id="pc" style="width:0"></i><i class="p" id="pp" style="width:0"></i><i class="g" id="pg" style="width:0"></i><i class="n" id="pn" style="width:0"></i>
+    </div>
+    <div class="steps" id="steps"></div>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+<!-- STEP 0: engagement -->
+<section class="step on" data-step="0">
+  <div class="eyebrow">Step 1 of 8</div>
+  <h1>Engagement details</h1>
+  <p class="lede">Set the context for this assessment. Everything here lands in the exported findings so the file makes sense on its own months later.</p>
+
+  <div class="card">
+    <div class="grid2">
+      <div><label class="f" for="fAcct">Account or customer name</label><input type="text" id="fAcct" placeholder="e.g. Contoso Group"></div>
+      <div><label class="f" for="fDate">Assessment date</label><input type="date" id="fDate"></div>
+    </div>
+    <div class="grid3" style="margin-top:14px">
+      <div><label class="f" for="fBy">Assessed by</label><input type="text" id="fBy" placeholder="Your name"></div>
+      <div><label class="f" for="fVer">Running VCF version</label><input type="text" id="fVer" placeholder="e.g. 9.1.0.0"></div>
+      <div><label class="f" for="fInst">VCF Instances in scope</label><input type="text" id="fInst" placeholder="e.g. 2"></div>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+      <div>
+        <label class="f" for="fDepot">Depot mode</label>
+        <select id="fDepot">
+          <option value="">Not yet established</option>
+          <option>Online, direct to Broadcom depot</option>
+          <option>Offline / dark site</option>
+          <option>Online via proxy</option>
+          <option>Mixed across instances</option>
+        </select>
+      </div>
+      <div>
+        <label class="f" for="fCA">Certificate authority in use</label>
+        <select id="fCA">
+          <option value="">Not yet established</option>
+          <option>Microsoft ADCS</option>
+          <option>OpenSSL native in SDDC Manager</option>
+          <option>External CA, manual CSR</option>
+          <option>Still on default deployment certificates</option>
+          <option>Mixed</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <label class="f" for="fCtx">Context worth recording</label>
+      <textarea id="fCtx" placeholder="Change freeze windows, regulatory constraints, who owns the maintenance calendar, known blockers."></textarea>
+    </div>
+  </div>
+
+  <div class="note">
+    <b>Nothing is saved automatically.</b> Use <b>Save session</b> in the bar below to write a JSON file you can reload later, and <b>Export findings</b> to produce the CSV. Closing the tab without doing either loses the work.
+  </div>
+</section>
+
+<!-- STEP 1: how it works -->
+<section class="step" data-step="1">
+  <div class="eyebrow">Step 2 of 8</div>
+  <h1>How this works</h1>
+  <p class="lede">Five sections, 48 checks. Mark each against what the customer actually operates today, not what they intend to do. Attribute coverage to whatever tooling genuinely delivers it, including tooling outside VCF.</p>
+
+  <div class="legend">
+    <div class="lg c"><b>In place</b><span>Operating today, and the customer could show you.</span></div>
+    <div class="lg p"><b>Partial</b><span>Exists somewhere, but inconsistent, manual, or not fleet wide.</span></div>
+    <div class="lg g"><b>Gap</b><span>Not happening. This becomes a finding.</span></div>
+    <div class="lg n"><b>Not applicable</b><span>Genuinely out of scope. Removed from the score entirely.</span></div>
+  </div>
+
+  <h2>What the framework expects</h2>
+  <div class="card">
+    <table>
+      <thead><tr><th style="width:22%">Pillar</th><th>What good looks like</th><th style="width:26%">Primary tool</th></tr></thead>
+      <tbody>
+        <tr><td><b>Patching and upgrades</b></td><td>Components held on a supported Bill of Materials, applied in the defined order, using reduced downtime and reboot free methods wherever the patch supports them.</td><td>VCF Operations binary management, upgrade and patch planners</td></tr>
+        <tr><td><b>Password management</b></td><td>Privileged credentials fresh, complex, and continuously compliant against a fleet policy, rotated on a schedule rather than by hand.</td><td>VCF Operations password policies, SDDC Manager rotate and schedule</td></tr>
+        <tr><td><b>Certificate management</b></td><td>Every management interface on a valid, trusted, CA signed certificate, with expiry handled before it becomes an outage.</td><td>VCF Operations, Fleet Management &gt; Certificates</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note">
+    <b>Fleet level and instance level are managed separately.</b> Management components (VCF Operations, VCF Automation, fleet management, Operations for logs, Operations for networks, Identity Broker) sit at fleet level. Core components (SDDC Manager, vCenter, NSX Manager, ESX) sit at VCF Instance level. Several checks below only make sense once you know which one you are talking about.
+  </div>
+
+  <div class="note">
+    <b>Items marked Phase 2</b> are deliberately deferred by the framework. They are still worth recording, but they drop to priority 3 in the findings so nobody is told they are failing at something the framework itself defers.
+  </div>
+</section>
+
+<!-- STEP 2..6 assessment sections -->
+<section class="step" data-step="2">
+  <div class="eyebrow">Step 3 of 8</div>
+  <h1>Foundation and depot</h1>
+  <p class="lede">Nothing else in lifecycle management works until binaries can be retrieved, the fleet inventory is accurate, and there is an agreed target Bill of Materials. This section is the load bearing wall.</p>
+  <div id="sec_FD"></div>
+</section>
+
+<section class="step" data-step="3">
+  <div class="eyebrow">Step 4 of 8</div>
+  <h1>Patching and upgrades</h1>
+  <p class="lede">Release types, component order, the plan and precheck workflow, and the reduced downtime methods that make frequent patching realistic. The gap between disclosure and exploitation is now days, so speed of patching is a security control.</p>
+  <div id="sec_PU"></div>
+</section>
+
+<section class="step" data-step="4">
+  <div class="eyebrow">Step 5 of 8</div>
+  <h1>Password management</h1>
+  <p class="lede">Fleet wide policy, the four distinct credential operations, and automatic rotation. Expired or mismatched credentials are one of the most common precheck blockers, which is why this sits alongside patching rather than off in a security backlog.</p>
+  <div id="sec_PW"></div>
+</section>
+
+<section class="step" data-step="5">
+  <div class="eyebrow">Step 6 of 8</div>
+  <h1>Certificate management</h1>
+  <p class="lede">Certificate authority configuration, replacement of default deployment certificates, and expiry handling. Bulk operations and automatic renewal are what make this sustainable at fleet scale.</p>
+  <div id="sec_CT"></div>
+</section>
+
+<section class="step" data-step="6">
+  <div class="eyebrow">Step 7 of 8</div>
+  <h1>Cadence and governance</h1>
+  <p class="lede">Lifecycle work is only reliable when it recurs on a schedule. Capture what the customer actually runs, then mark the checks below.</p>
+
+  <div class="card">
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px">
+      <h2 style="margin:0">Operating cadence in place today</h2>
+      <button class="btn" id="fillCadence" style="margin-left:auto;font-size:12.5px;padding:6px 12px">Fill MVP recommended cadence</button>
+    </div>
+    <table>
+      <thead><tr><th style="width:16%">Frequency</th><th style="width:40%">Activity</th><th style="width:22%">Owner</th><th style="width:22%">Runs today</th></tr></thead>
+      <tbody id="cadBody"></tbody>
+    </table>
+    <div class="note" style="margin-bottom:0">
+      <b>These are recommendations, not requirements.</b> Every interval should be tuned to the customer's change management and security policy. Record what they operate, not what the document says.
+    </div>
+  </div>
+
+  <div id="sec_OC"></div>
+</section>
+
+<!-- STEP 7: findings -->
+<section class="step" data-step="7">
+  <div class="eyebrow">Step 8 of 8</div>
+  <h1>Findings</h1>
+  <p class="lede" id="fLede">Scored against the checks you completed. Anything left unanswered is excluded rather than counted as a gap, so partial assessments still produce an honest picture.</p>
+
+  <div id="mvCheck"></div>
+
+  <div class="scores" id="scores"></div>
+
+  <h2>Prioritised findings</h2>
+  <div id="findings"></div>
+
+  <div class="credit">
+    <b>VCF 9.1 Lifecycle Management Discovery</b><br>
+    Built by Kunthaka Nilaweera, Broadcom. <a href="mailto:kunthaka.nilaweera@broadcom.com">kunthaka.nilaweera@broadcom.com</a><br>
+    Every setting, interval, and threshold in the underlying framework is a best practice recommendation and should be tuned to the environment, security policy, and change management requirements before implementation.
+  </div>
+</section>
+
+</div>
+</main>
+
+<div class="footnav">
+  <div class="wrap">
+    <button class="btn" id="prev">Back</button>
+    <button class="btn pri" id="next">Next</button>
+    <button class="btn" id="saveBtn">Save session</button>
+    <button class="btn" id="loadBtn">Load session</button>
+    <button class="btn" id="csvBtn">Export findings</button>
+    <input type="file" id="fileIn" accept=".json" class="hidden">
+    <div class="progress"><b id="pDone">0</b> of <span id="pTotal">48</span> answered</div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ---------------- data ---------------- */
+var SECTIONS = [
+  {key:"FD", name:"Foundation and depot",   group:"Stay current"},
+  {key:"PU", name:"Patching and upgrades",  group:"Stay current"},
+  {key:"PW", name:"Password management",    group:"Stay credentialed"},
+  {key:"CT", name:"Certificate management", group:"Stay trusted"},
+  {key:"OC", name:"Cadence and governance", group:"Stay disciplined"}
+];
+
+var ITEMS = [
+/* Foundation and depot */
+{id:"FD-01",s:"FD",p:1,t:"A single authoritative depot is configured on the VCF Operations fleet management appliance",h:"Online, offline, or dark site. Binaries must land here before any plan, precheck, or apply."},
+{id:"FD-02",s:"FD",p:1,t:"Depot mode is a deliberate, documented choice rather than whatever was set at deployment",h:"Offline staging is the recommendation for isolated or air gapped environments."},
+{id:"FD-03",s:"FD",p:2,t:"A proxy server is configured where VCF Management Services or VCF Automation need it to reach the depot",h:"New in 9.1. Mark not applicable if the appliance has direct access."},
+{id:"FD-04",s:"FD",p:2,t:"The same depot configuration is applied consistently across every VCF Instance",h:"One configuration serving both management and core binaries simplifies governance and audit."},
+{id:"FD-05",s:"FD",p:1,t:"Fleet inventory in VCF Operations is complete and accurate",h:"Every instance and component registered. An incomplete inventory means the planners cannot see what needs updating."},
+{id:"FD-06",s:"FD",p:1,t:"A target VCF 9.1 Bill of Materials is documented and validated against the interoperability matrix",h:"Do not assume compatibility because a version is close."},
+{id:"FD-07",s:"FD",p:2,t:"The split between fleet level management components and instance level core components is understood and reflected in runbooks",h:"The two groups are managed separately throughout."},
+{id:"FD-08",s:"FD",p:2,t:"Day-N lifecycle work is run from the VCF Operations console rather than the deprecated SDDC Manager UI",h:"With VCF 9.x the SDDC Manager UI is being deprecated and workflows have moved to VCF Operations."},
+
+/* Patching and upgrades */
+{id:"PU-01",s:"PU",p:2,t:"The four release types are understood and mapped to the customer's change classes",h:"Major and minor are fully synchronised. Maintenance and patch let you choose components."},
+{id:"PU-02",s:"PU",p:1,t:"Management components are updated in the defined order, starting with the fleet management appliance then the VCF Operations instance",h:"Updating core components before the management plane that orchestrates them is unsupported."},
+{id:"PU-03",s:"PU",p:1,t:"Core components follow SDDC Manager, NSX, vCenter, ESX, vSAN, in the management domain first and then each workload domain",h:""},
+{id:"PU-04",s:"PU",p:2,t:"Binaries are downloaded to the fleet management appliance ahead of the maintenance window, not during it",h:""},
+{id:"PU-05",s:"PU",p:2,t:"The upgrade or patch planner is used to select components and target versions, and compatibility warnings are addressed rather than dismissed",h:"A patch plan cannot be created while an upgrade plan exists for the same scope."},
+{id:"PU-06",s:"PU",p:1,t:"Precheck is treated as a hard gate, with no window proceeding past unresolved failures",h:"The most common cause of failed or rolled back windows is proceeding past precheck warnings."},
+{id:"PU-07",s:"PU",p:2,t:"Updates are scheduled into an agreed change window rather than run ad hoc",h:""},
+{id:"PU-08",s:"PU",p:1,t:"Post update verification confirms expected versions and healthy status in VCF Operations before temporary controls are removed",h:"Dependent services validated too, not just the component itself."},
+{id:"PU-09",s:"PU",p:1,t:"vCenter Reduced Downtime is used for vCenter major upgrades and minor updates where supported",h:"A new appliance is built alongside the running one, so only a brief switchover is disruptive. VM hardware version upgrades automatically."},
+{id:"PU-10",s:"PU",p:2,t:"vCenter Quick Patch is used for vCenter security and bug patches",h:"Patches services modularly with minimal or zero downtime and no full appliance reboot."},
+{id:"PU-11",s:"PU",p:1,t:"ESX Live Patch is used for hypervisor patches wherever the patch is Live Patch enabled",h:"VCF 9.1 targets up to 80 percent of ESX patches being Live Patch enabled. VMs keep running with no host reboot."},
+{id:"PU-12",s:"PU",p:2,t:"Independent SDDC Manager updates and individual component updates are used so a single issue does not force a full stack change",h:"An independent SDDC Manager patch changes only the fourth digit group and does not move the management domain version."},
+
+/* Password management */
+{id:"PW-01",s:"PW",p:1,t:"A password policy is created in VCF Operations",h:"New in 9.1. Without a policy there is nothing to check compliance against."},
+{id:"PW-02",s:"PW",p:1,t:"Policy scope is a deliberate choice: entire fleet, management components, or per VCF Instance",h:"Every fleet object can have only one active policy applying to it."},
+{id:"PW-03",s:"PW",p:2,t:"The policy defines length, complexity, expiration, account lockout, change interval, and history",h:"All six attributes set intentionally rather than left at defaults."},
+{id:"PW-04",s:"PW",p:1,t:"Policy compliance results are reviewed and non compliant components are remediated",h:"VCF Operations checks periodically and flags drift, but nobody acts on it unless someone owns the review."},
+{id:"PW-05",s:"PW",p:1,t:"Automatic rotation is configured in SDDC Manager at an interval matching organisational policy",h:"UI presets are 30, 60, or 90 days. Auto rotate runs at midnight and retries hourly if it cannot start."},
+{id:"PW-06",s:"PW",p:3,t:"Non preset rotation intervals are handled through the /v1/credentials API",h:"UPDATE_AUTO_ROTATE_POLICY accepts an arbitrary frequencyInDays value, for example 15 or 45."},
+{id:"PW-07",s:"PW",p:2,t:"The difference between update, rotate, remediate, and reset is understood and the right one is used for each case",h:"Update sets a known value, rotate randomises, remediate fixes a mismatch, reset is the local break glass path."},
+{id:"PW-08",s:"PW",p:1,t:"Passwords are never changed directly on components out of band",h:"SDDC Manager keeps a copy in its internal vault. Out of band changes create a mismatch that blocks inter component communication until remediated."},
+{id:"PW-09",s:"PW",p:2,t:"ESX account passwords have a defined manual or update based process",h:"Schedule Rotation does not apply to ESX accounts, so they need their own handling."},
+{id:"PW-10",s:"PW",p:3,ph2:true,t:"Enterprise vault integration is in place, or explicitly ruled out",h:"VCF Operations 9.1 provides APIs for integration with external systems such as Enterprise Vault."},
+
+/* Certificate management */
+{id:"CT-01",s:"CT",p:1,t:"A certificate authority is configured for the VCF management components",h:"Microsoft Active Directory Certificate Services is the only CA supported for management components."},
+{id:"CT-02",s:"CT",p:1,t:"A certificate authority is configured for each VCF Instance",h:"Management and instance components are configured separately, and each instance individually."},
+{id:"CT-03",s:"CT",p:1,t:"Default deployment signing certificates have been replaced on management domain components",h:"A default certificate still in use is a replacement trigger in its own right."},
+{id:"CT-04",s:"CT",p:2,t:"NTP is synchronised between the certificate authority and the SDDC Manager appliance",h:"Clock skew here is a quiet and frequent cause of failed issuance."},
+{id:"CT-05",s:"CT",p:2,t:"Certificate operations are run from VCF Operations at Fleet Management &gt; Certificates, using bulk selection",h:"Unified for all components in 9.1, with a Show ESX Hosts toggle to include or hide hosts."},
+{id:"CT-06",s:"CT",p:1,t:"Certificate expiry is monitored so nothing lapses between the daily console refreshes",h:"Expiry and connection status in VCF Operations refresh once per day."},
+{id:"CT-07",s:"CT",p:2,t:"A defined trigger list exists for replacement: default cert in use, nearing expiry, revoked, or a new workload domain",h:""},
+{id:"CT-08",s:"CT",p:1,t:"The ESX host certificate approach is decided and owned",h:"VMCA signed by default and managed by VMCA. External CA signed means the administrator owns renewal. From 9.0.2 with compatible vCenter, ESXi SSL certificates auto renew before expiry."},
+{id:"CT-09",s:"CT",p:2,t:"Certificate replacement is planned inside a window, because management UI and API availability can be briefly affected",h:"Dependent tasks run and services restart. Allow a few minutes for the console to catch up, then verify on the component."},
+{id:"CT-10",s:"CT",p:3,ph2:true,t:"The certificate management API is used to automate or schedule replacement at fleet scale",h:""},
+
+/* Cadence and governance */
+{id:"OC-01",s:"OC",p:1,t:"Daily: certificate and password alerts and policy compliance status are reviewed in VCF Operations",h:""},
+{id:"OC-02",s:"OC",p:2,t:"Weekly: the depot is reviewed for new patch and maintenance releases and assessed for security relevance",h:"Including whether they are Live Patch or quick patch eligible."},
+{id:"OC-03",s:"OC",p:2,t:"Monthly: automatic certificate renewal and password rotation are confirmed as succeeding across the fleet",h:"Failed scheduled tasks and non compliant components reviewed."},
+{id:"OC-04",s:"OC",p:2,t:"Quarterly: applicable maintenance releases are planned and applied in an agreed window",h:"Following the component update order and precheck workflow."},
+{id:"OC-05",s:"OC",p:1,t:"Per release: time sensitive security patches are applied promptly using quick patch and Live Patch",h:"Reduced downtime methods are what make prompt remediation realistic rather than aspirational."},
+{id:"OC-06",s:"OC",p:1,t:"A named owner is accountable for each of the three pillars",h:"Not a team name. A person."},
+{id:"OC-07",s:"OC",p:1,t:"The full patch workflow has been validated end to end on a management domain component before broad rollout",h:"BOM validation, download, plan, precheck, schedule, apply, verify."},
+{id:"OC-08",s:"OC",p:3,ph2:true,t:"Lifecycle status is reported to stakeholders on a recurring basis",h:""}
+];
+
+var CADENCE = [
+  {f:"Daily",   a:"Review certificate and password alerts and policy compliance status in VCF Operations"},
+  {f:"Weekly",  a:"Review the depot for newly available patch and maintenance releases"},
+  {f:"Monthly", a:"Confirm automatic certificate renewal and password rotation are succeeding fleet wide"},
+  {f:"Quarterly", a:"Plan and apply applicable maintenance releases in an agreed window"},
+  {f:"Per release", a:"Apply time sensitive security patches using quick patch and Live Patch"}
+];
+
+var STEP_TITLES = ["Details","How this works","Foundation","Patching","Passwords","Certificates","Cadence","Findings"];
+var LABELS = {covered:"In place", partial:"Partial", gap:"Gap", na:"N/A"};
+var WEIGHT = {covered:1, partial:0.5, gap:0, na:null};
+
+/* ---------------- state ---------------- */
+var state = {};
+ITEMS.forEach(function(i){ state[i.id] = {status:"", tooling:""}; });
+var cadence = CADENCE.map(function(c){ return {f:c.f, a:c.a, owner:"", runs:""}; });
+var step = 0;
+
+/* ---------------- build ---------------- */
+function esc(s){ return String(s).replace(/&(?!amp;|gt;|lt;|quot;)/g,"&amp;"); }
+
+SECTIONS.forEach(function(sec){
+  var host = document.getElementById("sec_"+sec.key);
+  if(!host) return;
+  var list = ITEMS.filter(function(i){ return i.s===sec.key; });
+  var head = document.createElement("div");
+  head.className = "sec-head";
+  head.innerHTML = '<h3>'+sec.name+'</h3><span>'+list.length+' checks</span>';
+  host.appendChild(head);
+
+  list.forEach(function(it){
+    var el = document.createElement("div");
+    el.className = "item";
+    el.id = "it_"+it.id;
+    var tags = "";
+    if(it.p===1) tags += '<span class="tag p1">Priority 1</span>';
+    if(it.ph2)   tags += '<span class="tag ph2">Phase 2</span>';
+    el.innerHTML =
+      '<div class="item-head">'+
+        '<div class="iid">'+it.id+'</div>'+
+        '<div class="itext">'+esc(it.t)+tags+
+          (it.h ? '<span class="ihint">'+esc(it.h)+'</span>' : '')+
+        '</div>'+
+      '</div>'+
+      '<div class="opts">'+
+        ['covered','partial','gap','na'].map(function(v){
+          return '<button type="button" data-id="'+it.id+'" data-v="'+v+'">'+LABELS[v]+'</button>';
+        }).join('')+
+      '</div>'+
+      '<div class="tooling"><input type="text" data-tool="'+it.id+'" placeholder="Tooling or note: what actually delivers this today"></div>';
+    host.appendChild(el);
+  });
+});
+
+/* cadence table */
+var cadBody = document.getElementById("cadBody");
+cadence.forEach(function(c,idx){
+  var tr = document.createElement("tr");
+  tr.innerHTML =
+    '<td><b>'+c.f+'</b></td>'+
+    '<td>'+c.a+'</td>'+
+    '<td><input type="text" data-cad="owner" data-i="'+idx+'" placeholder="Name"></td>'+
+    '<td><input type="text" data-cad="runs" data-i="'+idx+'" placeholder="Yes / No / Ad hoc"></td>';
+  cadBody.appendChild(tr);
+});
+cadBody.addEventListener("input", function(e){
+  var t = e.target;
+  if(!t.dataset.cad) return;
+  cadence[+t.dataset.i][t.dataset.cad] = t.value;
+});
+document.getElementById("fillCadence").addEventListener("click", function(){
+  cadBody.querySelectorAll('input[data-cad=runs]').forEach(function(inp){
+    if(!inp.value){ inp.value = "Recommended"; cadence[+inp.dataset.i].runs = "Recommended"; }
+  });
+});
+
+/* steps nav */
+var stepsBar = document.getElementById("steps");
+STEP_TITLES.forEach(function(t,i){
+  var b = document.createElement("button");
+  b.type = "button"; b.textContent = (i+1)+". "+t;
+  b.addEventListener("click", function(){ go(i); });
+  stepsBar.appendChild(b);
+});
+
+/* ---------------- interaction ---------------- */
+document.addEventListener("click", function(e){
+  var b = e.target.closest(".opts button");
+  if(!b) return;
+  var id = b.dataset.id, v = b.dataset.v;
+  state[id].status = (state[id].status===v) ? "" : v;
+  paint(id);
+  refresh();
+});
+document.addEventListener("input", function(e){
+  var t = e.target;
+  if(t.dataset && t.dataset.tool){ state[t.dataset.tool].tooling = t.value; }
+  if(t.id==="fAcct"){ document.getElementById("hAcct").textContent = t.value || "No account set"; }
+});
+
+function paint(id){
+  var el = document.getElementById("it_"+id);
+  var st = state[id].status;
+  el.className = "item" + (st ? " set s-"+st : "");
+  el.querySelectorAll(".opts button").forEach(function(b){
+    b.classList.toggle("on", b.dataset.v===st);
+  });
+  var inp = el.querySelector("input[data-tool]");
+  if(inp) inp.value = state[id].tooling;
+}
+
+function counts(){
+  var c = {covered:0, partial:0, gap:0, na:0, blank:0};
+  ITEMS.forEach(function(i){
+    var s = state[i.id].status;
+    if(!s) c.blank++; else c[s]++;
+  });
+  return c;
+}
+
+function refresh(){
+  var c = counts(), total = ITEMS.length;
+  var done = total - c.blank;
+  document.getElementById("pDone").textContent = done;
+  document.getElementById("pTotal").textContent = total;
+  var pct = function(n){ return (n/total*100).toFixed(2)+"%"; };
+  document.getElementById("pc").style.width = pct(c.covered);
+  document.getElementById("pp").style.width = pct(c.partial);
+  document.getElementById("pg").style.width = pct(c.gap);
+  document.getElementById("pn").style.width = pct(c.na);
+}
+
+function go(i){
+  step = Math.max(0, Math.min(STEP_TITLES.length-1, i));
+  document.querySelectorAll(".step").forEach(function(s){
+    s.classList.toggle("on", +s.dataset.step===step);
+  });
+  Array.prototype.forEach.call(stepsBar.children, function(b,idx){
+    b.classList.toggle("on", idx===step);
+    b.classList.toggle("done", idx<step);
+  });
+  document.getElementById("hDate").textContent = "Step "+(step+1)+" of "+STEP_TITLES.length;
+  document.getElementById("prev").disabled = (step===0);
+  document.getElementById("next").disabled = (step===STEP_TITLES.length-1);
+  if(step===STEP_TITLES.length-1) renderFindings();
+  window.scrollTo({top:0, behavior:"instant"});
+}
+document.getElementById("prev").addEventListener("click", function(){ go(step-1); });
+document.getElementById("next").addEventListener("click", function(){ go(step+1); });
+
+/* ---------------- findings ---------------- */
+var MIN_VIABLE = ["FD-01","FD-06","PU-06","PW-01","CT-01"];
+
+function scoreFor(keys){
+  var sum = 0, n = 0;
+  ITEMS.forEach(function(i){
+    if(keys.indexOf(i.s)===-1) return;
+    var w = WEIGHT[state[i.id].status];
+    if(state[i.id].status==="" || w===null) return;
+    sum += w; n++;
+  });
+  return n ? {pct:Math.round(sum/n*100), n:n} : {pct:null, n:0};
+}
+
+function renderFindings(){
+  var groups = [
+    {k:"Stay current",      keys:["FD","PU"], d:"Depot, Bill of Materials, order, precheck, reduced downtime"},
+    {k:"Stay credentialed", keys:["PW"],      d:"Policy, compliance, rotation"},
+    {k:"Stay trusted",      keys:["CT"],      d:"CA configuration, replacement, expiry"},
+    {k:"Stay disciplined",  keys:["OC"],      d:"Recurring cadence and ownership"}
+  ];
+  var host = document.getElementById("scores");
+  host.innerHTML = "";
+  groups.forEach(function(g){
+    var s = scoreFor(g.keys);
+    var d = document.createElement("div");
+    d.className = "score";
+    d.innerHTML =
+      '<div class="k">'+g.k+'</div>'+
+      '<div class="v">'+(s.pct===null ? "&ndash;" : s.pct+"%")+'</div>'+
+      '<div class="d">'+g.d+'</div>'+
+      '<div class="bar"><i style="width:'+(s.pct||0)+'%"></i></div>';
+    host.appendChild(d);
+  });
+
+  /* minimum viable check */
+  var missing = MIN_VIABLE.filter(function(id){ return state[id].status && state[id].status!=="covered" && state[id].status!=="na"; });
+  var unanswered = MIN_VIABLE.filter(function(id){ return !state[id].status; });
+  var mv = document.getElementById("mvCheck");
+  if(missing.length){
+    mv.innerHTML = '<div class="alarm"><b>The foundations are not in place</b>'+
+      'These checks carry everything else in the framework. Until they are resolved, the remaining findings have nothing to stand on.'+
+      '<ul>'+missing.map(function(id){
+        var it = ITEMS.filter(function(x){ return x.id===id; })[0];
+        return '<li><b>'+id+'</b> '+it.t+'</li>';
+      }).join('')+'</ul></div>';
+  } else if(unanswered.length===MIN_VIABLE.length){
+    mv.innerHTML = '';
+  } else if(!unanswered.length){
+    mv.innerHTML = '<div class="ok"><b>Foundations are in place</b>Depot, Bill of Materials, precheck discipline, password policy, and management component CA are all covered. The findings below are improvements on a working base.</div>';
+  } else {
+    mv.innerHTML = '';
+  }
+
+  /* prioritised findings */
+  var out = [];
+  ITEMS.forEach(function(i){
+    var st = state[i.id].status;
+    if(st!=="gap" && st!=="partial") return;
+    var pr = i.ph2 ? 3 : (st==="gap" ? i.p : Math.min(3, i.p+1));
+    out.push({i:i, st:st, pr:pr});
+  });
+  out.sort(function(a,b){ return a.pr-b.pr || a.i.id.localeCompare(b.i.id); });
+
+  var fh = document.getElementById("findings");
+  if(!out.length){
+    fh.innerHTML = '<div class="ok"><b>No gaps recorded</b>Either the environment is in good shape, or the assessment is not complete yet. Check the answered count in the bar below.</div>';
+  } else {
+    fh.innerHTML = out.map(function(o){
+      var secName = SECTIONS.filter(function(s){ return s.key===o.i.s; })[0].name;
+      return '<div class="finding p'+o.pr+'">'+
+        '<div class="fh"><span class="fid">'+o.i.id+'</span>'+
+        '<span class="ft">'+esc(o.i.t)+'</span>'+
+        '<span class="pill p'+o.pr+'">P'+o.pr+'</span></div>'+
+        '<div class="fm">'+secName+' &middot; '+LABELS[o.st]+
+        (o.i.ph2 ? ' &middot; Phase 2, deferred by the framework' : '')+
+        (state[o.i.id].tooling ? ' &middot; '+esc(state[o.i.id].tooling) : '')+
+        '</div></div>';
+    }).join('');
+  }
+
+  var c = counts();
+  document.getElementById("fLede").textContent =
+    (ITEMS.length-c.blank)+" of "+ITEMS.length+" checks answered. "+
+    c.covered+" in place, "+c.partial+" partial, "+c.gap+" gaps, "+c.na+" not applicable. "+
+    "Unanswered checks are excluded from the scores rather than counted as gaps.";
+}
+
+/* ---------------- export ---------------- */
+function acct(){
+  var v = (document.getElementById("fAcct").value || "ACCOUNT").trim();
+  return v.replace(/[^A-Za-z0-9]+/g,"_").replace(/^_|_$/g,"") || "ACCOUNT";
+}
+function download(name, text, mime){
+  var blob = new Blob([text], {type:mime});
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 200);
+}
+function q(v){ return '"'+String(v==null?"":v).replace(/"/g,'""')+'"'; }
+
+document.getElementById("csvBtn").addEventListener("click", function(){
+  var meta = {
+    account: document.getElementById("fAcct").value,
+    date: document.getElementById("fDate").value,
+    assessor: document.getElementById("fBy").value,
+    version: document.getElementById("fVer").value,
+    instances: document.getElementById("fInst").value,
+    depot: document.getElementById("fDepot").value,
+    ca: document.getElementById("fCA").value
+  };
+  var rows = [];
+  rows.push(["account","assessment_date","assessed_by","vcf_version","instances","depot_mode","certificate_authority","id","section","check","phase","priority","status","tooling_or_note"].map(q).join(","));
+  ITEMS.forEach(function(i){
+    var st = state[i.id].status;
+    var pr = i.ph2 ? 3 : (st==="gap" ? i.p : (st==="partial" ? Math.min(3,i.p+1) : i.p));
+    rows.push([
+      meta.account, meta.date, meta.assessor, meta.version, meta.instances, meta.depot, meta.ca,
+      i.id,
+      SECTIONS.filter(function(s){ return s.key===i.s; })[0].name,
+      i.t.replace(/&gt;/g,">"),
+      i.ph2 ? "Phase 2" : "MVP",
+      "P"+pr,
+      st ? LABELS[st] : "Not assessed",
+      state[i.id].tooling
+    ].map(q).join(","));
+  });
+  rows.push("");
+  rows.push([q("cadence_frequency"),q("cadence_activity"),q("owner"),q("runs_today")].join(","));
+  cadence.forEach(function(c){ rows.push([c.f,c.a,c.owner,c.runs].map(q).join(",")); });
+  if(document.getElementById("fCtx").value){
+    rows.push("");
+    rows.push([q("context"),q(document.getElementById("fCtx").value)].join(","));
+  }
+  download(acct()+"_lcm_discovery.csv", "\ufeff"+rows.join("\r\n"), "text/csv;charset=utf-8");
+});
+
+document.getElementById("saveBtn").addEventListener("click", function(){
+  var payload = {
+    tool:"vcf91-lcm-discovery", version:1, saved:new Date().toISOString(),
+    meta:{
+      account:document.getElementById("fAcct").value,
+      date:document.getElementById("fDate").value,
+      assessor:document.getElementById("fBy").value,
+      vcfVersion:document.getElementById("fVer").value,
+      instances:document.getElementById("fInst").value,
+      depot:document.getElementById("fDepot").value,
+      ca:document.getElementById("fCA").value,
+      context:document.getElementById("fCtx").value
+    },
+    state:state, cadence:cadence
+  };
+  download(acct()+"_lcm_session.json", JSON.stringify(payload,null,2), "application/json");
+});
+
+document.getElementById("loadBtn").addEventListener("click", function(){ document.getElementById("fileIn").click(); });
+document.getElementById("fileIn").addEventListener("change", function(e){
+  var f = e.target.files[0];
+  if(!f) return;
+  var r = new FileReader();
+  r.onload = function(){
+    try{
+      var d = JSON.parse(r.result);
+      if(d.tool!=="vcf91-lcm-discovery") throw new Error("wrong file");
+      var m = d.meta || {};
+      document.getElementById("fAcct").value = m.account || "";
+      document.getElementById("fDate").value = m.date || "";
+      document.getElementById("fBy").value = m.assessor || "";
+      document.getElementById("fVer").value = m.vcfVersion || "";
+      document.getElementById("fInst").value = m.instances || "";
+      document.getElementById("fDepot").value = m.depot || "";
+      document.getElementById("fCA").value = m.ca || "";
+      document.getElementById("fCtx").value = m.context || "";
+      document.getElementById("hAcct").textContent = m.account || "No account set";
+      ITEMS.forEach(function(i){
+        var s = (d.state && d.state[i.id]) || {status:"",tooling:""};
+        state[i.id] = {status:s.status||"", tooling:s.tooling||""};
+        paint(i.id);
+      });
+      if(Array.isArray(d.cadence)){
+        d.cadence.forEach(function(c,idx){
+          if(!cadence[idx]) return;
+          cadence[idx].owner = c.owner||""; cadence[idx].runs = c.runs||"";
+        });
+        cadBody.querySelectorAll("input[data-cad]").forEach(function(inp){
+          inp.value = cadence[+inp.dataset.i][inp.dataset.cad] || "";
+        });
+      }
+      refresh();
+    }catch(err){
+      alert("That file is not a saved Lifecycle Management Discovery session. Pick the JSON written by Save session.");
+    }
+    e.target.value = "";
+  };
+  r.readAsText(f);
+});
+
+/* ---------------- init ---------------- */
+ITEMS.forEach(function(i){ paint(i.id); });
+refresh(); go(0);
+})();
+</script>
+</body>
+</html>
