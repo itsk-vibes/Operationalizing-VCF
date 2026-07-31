@@ -25,9 +25,7 @@ An interactive HTML page for tracking VCF adoption and use cases across organiza
 
 ## Monitoring and Observability
 
-A framework and discovery tool for standing up meaningful alerting and dashboards on VCF 9. The framework defines an MVP set of day one alerts across availability, performance, and capacity, a "deny all, permit by exception" alert policy strategy, and the five dashboards worth building first.
-
-The discovery tool is an interactive HTML page for assessing what a customer already has in place. Step through the 21 MVP alerts, 5 dashboards, and 8 operating practice checks, marking each as covered, partial, or a gap, and attribute coverage to whatever tooling the customer actually runs. Export a findings CSV for reporting, or save the session as JSON to resume later.
+A framework and discovery tool for standing up meaningful alerting and dashboards on VCF 9. The framework defines an MVP set of day one alerts across availability, performance, and capacity, a "deny all, permit by exception" alert policy strategy, and the five dashboards worth building first. The discovery tool is an interactive HTML page for assessing what a customer already has in place. Export a findings CSV for reporting, or save the session as JSON to resume later.
 
 [![Open the Monitoring Discovery Tool](https://img.shields.io/badge/Open-Monitoring%20Discovery%20Tool-CC092F?style=for-the-badge)](./tools/Monitoring-Observability-Discovery.html)
 
@@ -35,8 +33,6 @@ The discovery tool is an interactive HTML page for assessing what a customer alr
 
 ## Incident Management
 
-A framework and discovery tool for turning VCF 9 alerts into tracked, owned incidents. The framework defines the three stage alert to incident pipeline, the ITSM integration options from SMTP as the minimum viable through to bidirectional ServiceNow sync, a four tier escalation model, and initial response playbooks for the Day 1 alert scenarios. 
-
-The discovery tool is an interactive HTML page for assessing how far a customer has got. Step through 47 checks across the pipeline, ITSM integration, escalation model, response playbooks, and notification rule strategy, marking each as in place, partial, or a gap, and attribute coverage to whatever tooling the customer actually runs. Phase 2 items are tagged so they do not count against the MVP score. Export a findings CSV for reporting, or save the session as JSON to resume later.
+A framework and discovery tool for turning VCF 9 alerts into tracked, owned incidents. The discovery tool is an interactive HTML page for assessing how far a customer has got. Step through 47 checks across the pipeline, ITSM integration, escalation model, response playbooks, and notification rule strategy, marking each as in place, partial, or a gap, and attribute coverage to whatever tooling the customer actually runs.
 
 [![Open the Incident Management Discovery Tool](https://img.shields.io/badge/Open-Incident%20Management%20Discovery%20Tool-A96A05?style=for-the-badge)](./tools/Incident-Management-Discovery.html)
