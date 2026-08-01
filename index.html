@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Operationalizing VCF</title>
+<meta name="description" content="Notes, scripts, and frameworks to help operationalize a VMware Cloud Foundation 9.1 environment.">
+<style>
+:root{
+  --bg:#0b1019; --raised:#141b26; --raised-2:#182130; --border:#232c3a;
+  --text:#c3ccd8; --dim:#8996a8; --head:#e7edf3;
+  --teal:#45b8c8; --brand:#007B8C; --cyan:#3fd0e0;
+  --mon:#CC092F; --inc:#A96A05; --lcm:#5B3E90;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px 90px}
+img.full{width:100%;display:block}
+.owner{text-align:right;font-size:12.5px;color:var(--dim);margin:8px 0 0}
+.intro{font-size:16.5px;line-height:1.65;margin:26px 0 34px;max-width:760px}
+
+h2{color:var(--head);font-size:23px;font-weight:650;letter-spacing:-.01em;margin:0 0 10px}
+a{color:var(--teal);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* ---------- standalone tracker hero ---------- */
+.hero{position:relative;background:linear-gradient(160deg,#12202a 0%,var(--raised) 55%);
+  border:1px solid var(--border);border-radius:16px;padding:34px 36px 32px;overflow:hidden;
+  margin-bottom:52px}
+.hero::before{content:"";position:absolute;inset:0 auto 0 0;width:4px;background:var(--brand)}
+.hero .eyebrow{font:700 11px/1 system-ui;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--cyan);margin-bottom:12px}
+.hero h2{font-size:29px;margin-bottom:12px}
+.hero p{margin:0 0 22px;max-width:660px;color:var(--text)}
+.hero .swatches{display:flex;gap:6px;margin:0 0 24px}
+.hero .swatches i{width:34px;height:20px;border-radius:4px;border:1px solid rgba(255,255,255,.14);display:block}
+.btn{display:inline-flex;align-items:center;gap:9px;font:650 14px/1 inherit;
+  background:var(--brand);color:#fff;border-radius:9px;padding:13px 20px;
+  border:1px solid var(--brand);transition:filter .15s ease}
+.btn:hover{filter:brightness(1.15);text-decoration:none}
+
+/* ---------- three columns ---------- */
+.secthead{display:flex;align-items:baseline;gap:14px;margin:0 0 20px}
+.secthead h3{margin:0;color:var(--head);font-size:14px;font-weight:700;
+  letter-spacing:.14em;text-transform:uppercase}
+.secthead .rule{flex:1;height:1px;background:var(--border)}
+
+.cols{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:920px){.cols{grid-template-columns:1fr}}
+.card{display:flex;flex-direction:column;background:var(--raised);
+  border:1px solid var(--border);border-radius:14px;overflow:hidden;
+  transition:transform .16s ease,border-color .16s ease,box-shadow .16s ease}
+.card:hover{transform:translateY(-3px);border-color:#31404F;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.card .accent{height:3px}
+.card.mon .accent{background:var(--mon)} .card.inc .accent{background:var(--inc)}
+.card.lcm .accent{background:var(--lcm)}
+.card .inner{padding:22px 22px 24px;display:flex;flex-direction:column;flex:1}
+.card h2{font-size:18.5px;margin-bottom:10px;line-height:1.3}
+.card p{font-size:14px;line-height:1.6;color:var(--text);margin:0 0 22px}
+.card .cta{margin-top:auto}
+.card .cta a{display:inline-flex;align-items:center;gap:8px;font:650 13.5px/1 inherit;
+  border-radius:8px;padding:11px 16px;border:1px solid var(--border);color:var(--head);
+  background:var(--raised-2);transition:background .15s ease,border-color .15s ease}
+.card.mon .cta a:hover{background:var(--mon);border-color:var(--mon);color:#fff;text-decoration:none}
+.card.inc .cta a:hover{background:var(--inc);border-color:var(--inc);color:#fff;text-decoration:none}
+.card.lcm .cta a:hover{background:var(--lcm);border-color:var(--lcm);color:#fff;text-decoration:none}
+
+@media(prefers-reduced-motion:reduce){
+  .card,.btn{transition:none}
+  .card:hover{transform:none}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="full" src="./assets/header.svg" alt="Operationalizing VCF">
+  <p class="owner">Owner: Kunthaka Nilaweera</p>
+  <p class="intro">A collection of notes, scripts, and frameworks to help operationalize a VMware Cloud Foundation 9.1 environment.</p>
+
+  <div class="hero">
+    <div class="eyebrow">Adoption</div>
+    <h2>VCF Adoption Tracker</h2>
+    <p>An interactive page for tracking VCF adoption and use cases across organizations. Click a square to cycle its status, tracked separately for Usage and Use Case per component. Export the results to Excel or CSV, or re-import a saved file to carry on later.</p>
+    <div class="swatches"><i style="background:#FF9900"></i><i style="background:#FFD400"></i><i style="background:#84C341"></i></div>
+    <a class="btn" href="./tools/VCF_Adoption_Tracker.html">Open the tracker →</a>
+  </div>
+
+  <div class="secthead"><h3>Operational Frameworks</h3><span class="rule"></span></div>
+  <div class="cols">
+    <div class="card mon"><div class="accent"></div><div class="inner">
+      <h2>Monitoring and Observability</h2>
+      <p>An MVP set of day one alerts across availability, performance, and capacity, a “deny all, permit by exception” policy strategy, and the five dashboards worth building first.</p>
+      <div class="cta"><a href="./tools/Monitoring-Observability-Discovery.html">Open discovery tool →</a></div>
+    </div></div>
+
+    <div class="card inc"><div class="accent"></div><div class="inner">
+      <h2>Incident Management</h2>
+      <p>Turning VCF 9 alerts into tracked, owned incidents. Step through checks covering the pipeline, ITSM integration, escalation model, response playbooks, and notification rule strategy.</p>
+      <div class="cta"><a href="./tools/Incident-Management-Discovery.html">Open discovery tool →</a></div>
+    </div></div>
+
+    <div class="card lcm"><div class="accent"></div><div class="inner">
+      <h2>Lifecycle Management</h2>
+      <p>Keeping the platform current and secure through patching, password, and certificate management, across the depot and Bill of Materials foundation, upgrades, and operating cadence.</p>
+      <div class="cta"><a href="./tools/Lifecycle-Management-Discovery.html">Open discovery tool →</a></div>
+    </div></div>
+  </div>
+</div>
+</body>
+</html>
