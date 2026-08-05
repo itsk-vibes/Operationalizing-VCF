@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VCF 9 Service Request Management: Discovery</title>
+<style>
+:root{
+  --ink:#0E1420;
+  --ink-soft:#3A4557;
+  --muted:#6B7788;
+  --line:#DDE2EA;
+  --line-soft:#EBEEF3;
+  --surface:#F4F6F9;
+  --panel:#FFFFFF;
+  --brand:#1D5FA8;
+  --brand-dk:#16497F;
+  --work:#5FA83C;
+  --work-dk:#3F7A24;
+  --wait:#3C86C8;
+  --wait-dk:#26618F;
+  --auto:#0E8C9B;
+  --auto-bg:#E4F4F6;
+  --gap:#B62020;
+  --gap-bg:#FBE9E9;
+  --partial:#A96A05;
+  --partial-bg:#FBF0DE;
+  --covered:#137A4B;
+  --covered-bg:#E6F3EC;
+  --na:#7A8798;
+  --na-bg:#EEF1F5;
+  --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  --ui:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--ui);background:var(--surface);color:var(--ink);
+  font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:50;background:var(--ink);color:#fff;border-bottom:3px solid var(--brand)}
+.head-top{display:flex;align-items:center;gap:14px;padding:14px 0 12px}
+.mark{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:#fff;background:var(--brand);padding:4px 8px;border-radius:2px;white-space:nowrap}
+.head-title{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.head-sub{font-size:12px;color:#9AA7B8;margin-top:1px}
+.head-acct{margin-left:auto;text-align:right;font-size:12px;color:#9AA7B8;max-width:44%}
+.head-acct b{display:block;color:#fff;font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.posture{display:flex;height:8px;border-radius:2px;overflow:hidden;background:#232C3B;margin-bottom:10px}
+.posture i{display:block;height:100%;transition:width .35s cubic-bezier(.4,0,.2,1)}
+.posture i.w{background:var(--work)}
+.posture i.q{background:var(--wait)}
+.posture-legend{display:flex;gap:16px;font-size:11px;color:#9AA7B8;padding-bottom:12px;flex-wrap:wrap}
+.posture-legend span{display:flex;align-items:center;gap:5px}
+.posture-legend b{color:#fff;font-weight:600}
+.dot{width:8px;height:8px;border-radius:2px;display:inline-block}
+
+nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:thin}
+nav button{flex:0 0 auto;background:transparent;border:0;border-bottom:3px solid transparent;
+  color:#9AA7B8;font-family:var(--ui);font-size:12.5px;font-weight:500;
+  padding:9px 12px;cursor:pointer;white-space:nowrap;margin-bottom:-3px;
+  display:flex;align-items:center;gap:7px}
+nav button:hover{color:#fff}
+nav button.on{color:#fff;border-bottom-color:var(--brand)}
+nav button .num{font-family:var(--mono);font-size:10px;opacity:.65}
+nav button .cnt{font-family:var(--mono);font-size:10px;background:#232C3B;color:#B9C4D2;padding:1px 5px;border-radius:2px}
+nav button.on .cnt{background:var(--brand);color:#fff}
+nav button.done .cnt{background:#2FA36B;color:#06240F}
+
+/* ---------- content ---------- */
+main{padding:26px 0 96px}
+.step{display:none}
+.step.on{display:block}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--brand);margin-bottom:6px}
+h1{font-size:25px;line-height:1.2;letter-spacing:-.02em;margin:0 0 8px;font-weight:650}
+.lede{color:var(--ink-soft);max-width:74ch;margin:0 0 22px;font-size:14.5px}
+
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px;margin-bottom:18px}
+.panel-head{padding:13px 16px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.panel-head h2{margin:0;font-size:14px;font-weight:650;letter-spacing:-.01em}
+.panel-head .hint{font-size:12.5px;color:var(--muted)}
+.panel-head .tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.panel-body{padding:16px}
+.panel-body.tight{padding:0}
+
+/* forms */
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:repeat(4,1fr)}
+label.f{display:block}
+label.f span{display:block;font-size:11px;font-family:var(--mono);letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+input[type=text],input[type=date],input[type=number],select,textarea{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:4px;
+  font-family:var(--ui);font-size:14px;color:var(--ink);background:#fff}
+textarea{min-height:76px;resize:vertical;line-height:1.45}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:transparent}
+
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(215px,1fr));gap:8px}
+.chk{display:flex;align-items:flex-start;gap:9px;padding:9px 11px;border:1px solid var(--line);
+  border-radius:4px;cursor:pointer;font-size:13.5px;background:#fff}
+.chk:hover{border-color:var(--ink-soft)}
+.chk input{margin:2px 0 0;accent-color:var(--brand);flex:0 0 auto}
+.chk.sel{border-color:var(--brand);background:#F1F6FC}
+
+/* buttons */
+.btn{border:1px solid var(--ink);background:var(--ink);color:#fff;padding:9px 15px;border-radius:4px;
+  font-family:var(--ui);font-size:13.5px;font-weight:550;cursor:pointer}
+.btn:hover{background:#1B2434}
+.btn.alt{background:#fff;color:var(--ink)}
+.btn.alt:hover{background:var(--surface)}
+.btn.blue{background:var(--brand);border-color:var(--brand)}
+.btn.blue:hover{background:var(--brand-dk)}
+.btn.ghost{background:none;border-color:var(--line);color:var(--ink-soft)}
+.btn.ghost:hover{background:var(--surface)}
+.btn.sm{padding:6px 11px;font-size:12.5px}
+.btn.xs{padding:3px 8px;font-size:11.5px;border-radius:3px}
+.btn.danger{color:var(--gap);border-color:var(--line);background:none}
+.btn.danger:hover{background:var(--gap-bg)}
+.btn[disabled]{opacity:.4;cursor:not-allowed}
+
+.footbar{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);padding:11px 0;z-index:40}
+.footbar .wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.footbar .status{font-size:12px;color:var(--muted);margin-right:auto;font-family:var(--mono)}
+
+/* ---------- swimlane ---------- */
+.swimwrap{overflow-x:auto;background:var(--panel);border-top:1px solid var(--line-soft)}
+.swim{display:grid;min-width:100%;font-size:12.5px}
+.swim .hcell{position:sticky;top:0;z-index:3;background:var(--surface);border-bottom:1px solid var(--line);
+  border-right:1px solid var(--line-soft);padding:9px 10px;font-weight:650;font-size:12px;
+  display:flex;align-items:center;gap:6px}
+.swim .hcell.corner{position:sticky;left:0;z-index:4;background:var(--surface)}
+.swim .hcell .pname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.swim .hcell .ptime{font-family:var(--mono);font-size:10px;color:var(--muted);font-weight:400;white-space:nowrap}
+.swim .lcell{position:sticky;left:0;z-index:2;background:var(--panel);border-right:1px solid var(--line);
+  border-bottom:1px solid var(--line-soft);padding:10px;display:flex;flex-direction:column;gap:3px;justify-content:center}
+.swim .lcell .lname{font-weight:650;font-size:12.5px;display:flex;align-items:center;gap:6px;line-height:1.25}
+.swim .lcell .lswatch{width:9px;height:16px;border-radius:2px;flex:0 0 auto}
+.swim .lcell .ltime{font-family:var(--mono);font-size:10px;color:var(--muted)}
+.swim .cell{border-right:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);
+  padding:7px;min-height:56px;display:flex;flex-direction:column;gap:5px}
+.swim .cell.drop{background:#EAF2FB;box-shadow:inset 0 0 0 2px var(--brand)}
+.swim .cell .add{opacity:0;border:1px dashed var(--line);background:none;color:var(--muted);
+  border-radius:4px;font-size:11.5px;padding:4px;cursor:pointer;font-family:var(--ui);margin-top:auto}
+.swim .cell:hover .add{opacity:1}
+.swim .cell .add:hover{border-color:var(--brand);color:var(--brand)}
+.chip{border:1px solid rgba(14,20,32,.14);border-left:4px solid #999;border-radius:4px;background:#fff;
+  padding:6px 8px;cursor:grab;position:relative;text-align:left;font-family:var(--ui);width:100%;
+  display:block;font-size:12.5px;line-height:1.35;color:var(--ink)}
+.chip:hover{border-color:var(--ink-soft)}
+.chip.sel{outline:2px solid var(--brand);outline-offset:1px}
+.chip.dragging{opacity:.35}
+.chip.insert{box-shadow:0 -3px 0 -1px var(--brand)}
+.chip .cname{font-weight:600;display:block}
+.chip .ctime{font-family:var(--mono);font-size:10px;color:var(--muted);margin-top:2px;display:flex;gap:7px;flex-wrap:wrap}
+.chip .ctime .w{color:var(--work-dk)}
+.chip .ctime .q{color:var(--wait-dk)}
+.chip .cbadge{position:absolute;top:-6px;right:-4px;font-family:var(--mono);font-size:9px;
+  background:var(--auto);color:#fff;border-radius:2px;padding:1px 4px;letter-spacing:.04em}
+.chip.par{border-style:dashed}
+.chip.autoable{box-shadow:inset 0 -3px 0 var(--auto)}
+
+.lanebar{display:flex;flex-wrap:wrap;gap:6px;padding:12px 16px;border-bottom:1px solid var(--line-soft);align-items:center}
+.tokrow{display:flex;align-items:center;gap:5px;border:1px solid var(--line);border-radius:20px;padding:3px 4px 3px 9px;background:#fff}
+.tokrow .sw{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.tokrow input{border:0;padding:2px 0;font-size:12.5px;width:15ch;background:none}
+.tokrow input:focus{outline:none;border-bottom:1px solid var(--brand)}
+.tokrow button{border:0;background:none;cursor:pointer;color:var(--muted);font-size:13px;line-height:1;padding:2px 4px;border-radius:3px}
+.tokrow button:hover{background:var(--surface);color:var(--ink)}
+.tokrow .col{width:18px;height:18px;padding:0;border:1px solid var(--line);border-radius:3px;background:none;cursor:pointer}
+
+/* step editor */
+.editor{border-top:1px solid var(--line);background:#FBFCFD;padding:16px}
+.editor .etitle{font-size:13px;font-weight:650;margin-bottom:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.editor .etitle .kbd{font-family:var(--mono);font-size:10.5px;color:var(--muted);background:#fff;
+  border:1px solid var(--line);border-radius:3px;padding:1px 5px}
+.eempty{padding:20px 16px;color:var(--muted);font-size:13.5px;text-align:center;border-top:1px solid var(--line)}
+.howbox{margin-top:10px;font-size:12.5px;color:var(--ink-soft);background:var(--auto-bg);
+  border:1px solid #C7E5E9;border-radius:4px;padding:10px 12px}
+.howbox b{color:var(--auto)}
+
+/* ---------- timing table ---------- */
+.tt{width:100%;border-collapse:collapse;font-size:13px}
+.tt th{text-align:left;font-family:var(--mono);font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;padding:9px 8px;border-bottom:1px solid var(--line);
+  background:var(--surface);position:sticky;top:96px;z-index:2}
+.tt td{padding:5px 8px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+.tt tr.phase td{background:var(--surface);font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;
+  text-transform:uppercase;color:var(--muted);padding:7px 8px;font-weight:600}
+.tt tr:hover td{background:#FAFCFE}
+.tt tr.phase:hover td{background:var(--surface)}
+.tt .sname{font-weight:600;font-size:13px}
+.tt .slane{font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-top:1px}
+.tt .slane i{width:8px;height:8px;border-radius:2px;display:inline-block;flex:0 0 auto}
+.tt input.dur{width:9ch;font-family:var(--mono);font-size:12.5px;padding:5px 7px;text-align:right}
+.tt input.dur.w{color:var(--work-dk)} .tt input.dur.q{color:var(--wait-dk)}
+.tt select.cap,.tt select.lvl{font-size:12px;padding:5px 6px}
+.tt .ord{display:flex;gap:2px}
+.tt .num{font-family:var(--mono);font-size:10.5px;color:var(--muted);width:3ch}
+.tt td.right{text-align:right;font-family:var(--mono);font-size:12px}
+
+/* ---------- lead time bar ---------- */
+.leadbox{padding:18px 16px}
+.leadhead{display:flex;align-items:baseline;gap:10px;margin-bottom:6px;flex-wrap:wrap}
+.leadhead .ttl{font-size:12px;font-family:var(--mono);letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.leadhead .tot{margin-left:auto;font-size:12.5px;color:var(--ink-soft)}
+.leadhead .tot b{font-size:15px}
+.leadrail{position:relative;padding:0 12px}
+.leadrail::before,.leadrail::after{content:"";position:absolute;top:-6px;bottom:-6px;width:6px;background:var(--wait-dk);border-radius:1px}
+.leadrail::before{left:0} .leadrail::after{right:0}
+.lead{display:flex;height:46px;overflow:hidden;background:var(--line-soft);border-radius:2px}
+.lead i{display:block;height:100%;min-width:1px;position:relative}
+.lead i.w{background:var(--work);border-right:1px solid rgba(255,255,255,.5)}
+.lead i.q{background:var(--wait);border-right:1px solid rgba(255,255,255,.35)}
+.lead i:hover{filter:brightness(1.15);outline:2px solid var(--ink);outline-offset:-2px;z-index:2}
+.leadends{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
+.scale{display:flex;height:16px;margin-top:2px;position:relative;padding:0 12px}
+.scale i{flex:1;border-left:1px solid var(--line);font-family:var(--mono);font-size:9.5px;color:var(--muted);padding-left:3px;line-height:16px}
+.leadlegend{display:flex;gap:16px;font-size:12px;color:var(--muted);margin-top:12px;flex-wrap:wrap;align-items:center}
+.leadlegend span{display:flex;align-items:center;gap:6px}
+.hoverinfo{font-size:12.5px;color:var(--ink-soft);margin-top:10px;min-height:20px;font-family:var(--mono)}
+.hoverinfo b{color:var(--ink)}
+
+.parstrip{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}
+.parstrip .ttl{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
+.parlist{display:flex;flex-wrap:wrap;gap:6px}
+.parlist span{font-size:11.5px;border:1px dashed var(--line);border-radius:3px;padding:3px 8px;color:var(--ink-soft);background:#fff}
+
+/* scorecards + breakdowns */
+.scorecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;margin-bottom:18px}
+.score{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:15px}
+.score .lbl{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--muted)}
+.score .val{font-size:31px;font-weight:650;letter-spacing:-.03em;margin:4px 0 2px;line-height:1}
+.score .sub{font-size:12px;color:var(--muted)}
+.score .bar{height:5px;background:var(--line-soft);border-radius:3px;margin-top:10px;overflow:hidden;display:flex}
+.score .bar i{height:100%}
+.score.hi .val{color:var(--gap)}
+.score.good .val{color:var(--covered)}
+
+.brk{padding:6px 16px 16px}
+.brkrow{display:grid;grid-template-columns:minmax(140px,270px) 1fr auto;gap:12px;align-items:center;
+  padding:6px 0;border-bottom:1px solid var(--line-soft);font-size:13px}
+.brkrow:last-child{border-bottom:0}
+.brkrow .nm{display:flex;align-items:center;gap:7px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.brkrow .nm i{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
+.brkbar{display:flex;height:14px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+.brkbar i{height:100%}
+.brkbar i.w{background:var(--work)} .brkbar i.q{background:var(--wait)}
+.brkrow .amt{font-family:var(--mono);font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+
+/* quick wins */
+.qw{border-bottom:1px solid var(--line-soft);padding:13px 16px;display:flex;gap:12px;align-items:flex-start}
+.qw:last-child{border-bottom:0}
+.qw .rank{font-family:var(--mono);font-size:12px;color:#fff;background:var(--brand);border-radius:3px;
+  padding:2px 7px;flex:0 0 auto;margin-top:2px}
+.qw .qname{font-weight:600;font-size:14px}
+.qw .qmeta{font-size:12.5px;color:var(--muted);margin-top:2px}
+.qw .qsave{margin-left:auto;text-align:right;flex:0 0 auto}
+.qw .qsave b{display:block;font-size:15px;color:var(--covered);font-family:var(--mono)}
+.qw .qsave span{font-size:11px;color:var(--muted)}
+.pill{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:3px;font-weight:600;background:var(--na-bg);color:var(--na)}
+.pill.low{background:var(--covered-bg);color:var(--covered)}
+.pill.med{background:var(--partial-bg);color:var(--partial)}
+.pill.high{background:var(--gap-bg);color:var(--gap)}
+.pill.full{background:var(--auto-bg);color:var(--auto)}
+.pill.remove{background:var(--covered-bg);color:var(--covered)}
+.pill.partial{background:var(--partial-bg);color:var(--partial)}
+.pill.none{background:var(--na-bg);color:var(--na)}
+
+/* comparison table */
+.cmp{width:100%;border-collapse:collapse;font-size:13.5px}
+.cmp th{text-align:left;font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;padding:0 10px 8px 0;border-bottom:1px solid var(--line-soft)}
+.cmp td{padding:9px 10px 9px 0;border-bottom:1px solid var(--line-soft)}
+.cmp tr:last-child td{border-bottom:0}
+.cmp .metric{font-weight:600}
+.cmp .cur{font-family:var(--mono);color:var(--gap)}
+.cmp .tgt{font-family:var(--mono);color:var(--covered)}
+.cmp .red{font-family:var(--mono);font-weight:600}
+
+.elim{list-style:none;margin:0;padding:0}
+.elim li{display:flex;gap:11px;padding:9px 16px;border-bottom:1px solid var(--line-soft);font-size:13.5px;align-items:flex-start}
+.elim li:last-child{border-bottom:0}
+.elim .fname{font-weight:600}
+.elim .fsub{color:var(--muted);font-size:12.5px;margin-top:1px}
+
+.empty{padding:24px 16px;color:var(--muted);font-size:13.5px;text-align:center}
+.summary-box{font-family:var(--mono);font-size:12.5px;line-height:1.65;white-space:pre-wrap;
+  background:var(--ink);color:#D7DEE8;padding:16px;border-radius:5px;max-height:360px;overflow:auto}
+.exports{display:flex;gap:10px;flex-wrap:wrap}
+.note{background:#F1F5FB;border:1px solid #D6E0EE;color:#28477F;padding:11px 14px;border-radius:5px;font-size:13px;margin-bottom:16px}
+.warn{background:var(--partial-bg);border:1px solid #EBD3A6;color:#6B4405;padding:11px 14px;border-radius:5px;font-size:13px;margin-bottom:16px}
+.credit{text-align:center;font-size:11.5px;color:var(--muted);padding:22px 0 8px}
+.roadphase{border-bottom:1px solid var(--line-soft);padding:14px 16px}
+.roadphase:last-child{border-bottom:0}
+.roadphase .rh{display:flex;align-items:baseline;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+.roadphase .rh b{font-size:14px}
+.roadphase .rh .wk{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.roadphase .rh input{width:14ch;font-size:12.5px;padding:4px 7px;margin-left:auto}
+
+@media(max-width:900px){
+  .g2,.g3,.g4{grid-template-columns:1fr}
+  .head-acct{display:none}
+  .brkrow{grid-template-columns:1fr auto}
+  .brkrow .brkbar{grid-column:1/-1}
+  .tt th{position:static}
+}
+@media print{
+  header,nav,.footbar,.exports,.lanebar,.editor,.swim .cell .add,.btn{display:none!important}
+  body{background:#fff;font-size:11.5px}
+  .step{display:none!important}
+  .step.on{display:block!important}
+  .swimwrap{overflow:visible}
+  .panel{break-inside:avoid}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="head-top">
+      <span class="mark">VCF 9</span>
+      <div>
+        <div class="head-title">Service Request Management Discovery</div>
+        <div class="head-sub">Map the provisioning process, time every step, find the automation. v1.0</div>
+      </div>
+      <div class="head-acct"><b id="hAcct">No account set</b><span id="hDate"></span></div>
+    </div>
+    <div class="posture" id="posture" title="Work time against wait time on the critical path">
+      <i class="w" style="width:0"></i><i class="q" style="width:0"></i>
+    </div>
+    <div class="posture-legend">
+      <span><i class="dot" style="background:#5FA83C"></i>Work <b id="lgW">0</b></span>
+      <span><i class="dot" style="background:#3C86C8"></i>Wait <b id="lgQ">0</b></span>
+      <span>Lead time <b id="lgT">0</b></span>
+      <span>Process efficiency <b id="lgE">0%</b></span>
+      <span>Steps <b id="lgS">0</b></span>
+    </div>
+    <nav id="nav"></nav>
+  </div>
+</header>
+
+<main>
+<div class="wrap">
+
+  <!-- ============ STEP 1 ============ -->
+  <section class="step on" data-step="0">
+    <div class="eyebrow">Step 1 of 6</div>
+    <h1>Engagement context</h1>
+    <p class="lede">Set the scene before you draw anything. The numbers the customer quotes from memory here are worth capturing, because the swimlane you build together will almost always tell a different story.</p>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Engagement</h2></div>
+      <div class="panel-body">
+        <div class="grid g3">
+          <label class="f"><span>Account</span><input type="text" id="m_account" placeholder="Customer name"></label>
+          <label class="f"><span>Date</span><input type="date" id="m_date"></label>
+          <label class="f"><span>Consultant</span><input type="text" id="m_consultant" placeholder="Your name"></label>
+          <label class="f"><span>Customer contact</span><input type="text" id="m_contact" placeholder="Who walked you through the process"></label>
+          <label class="f"><span>Service being mapped</span><input type="text" id="m_service" placeholder="Standard Windows VM provisioning"></label>
+          <label class="f"><span>VCF version</span><input type="text" id="m_version" placeholder="VCF 9.1"></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Current state, as stated</h2><span class="hint">What they believe today, before you measure it</span></div>
+      <div class="panel-body">
+        <div class="grid g4">
+          <label class="f"><span>Requests per month</span><input type="text" id="m_volume" placeholder="40"></label>
+          <label class="f"><span>Quoted lead time</span><input type="text" id="m_quoted" placeholder="30 to 45 days"></label>
+          <label class="f"><span>Teams involved</span><input type="text" id="m_teams" placeholder="7 to 8"></label>
+          <label class="f"><span>Target lead time</span><input type="text" id="m_target" placeholder="Same day"></label>
+        </div>
+        <div class="grid g2" style="margin-top:14px">
+          <label class="f"><span>Where they think the time goes</span><textarea id="m_belief" placeholder="Usually the answer is the CAB meeting or the security review. Write down the answer before you build the swimlane."></textarea></label>
+          <label class="f"><span>Biggest pain point</span><textarea id="m_pain" placeholder="What triggered this conversation"></textarea></label>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Platforms in play</h2><span class="hint">What the automation will have to integrate with</span></div>
+      <div class="panel-body">
+        <div class="checks" id="toolChecks"></div>
+        <label class="f" style="margin-top:14px"><span>Anything else, comma separated</span><input type="text" id="m_toolsOther" placeholder="Infoblox, SentinelOne, Tenable"></label>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 2 ============ -->
+  <section class="step" data-step="1">
+    <div class="eyebrow">Step 2 of 6</div>
+    <h1>Build the swimlane</h1>
+    <p class="lede">Rows are teams, columns are phases. Add a step wherever a team does something, then drag steps between cells as the customer corrects you. Click any step to open its detail. Start from the baseline template if you want a straw man to react to, which is usually faster than starting from an empty grid.</p>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2>Teams</h2><span class="hint">One row each</span>
+        <div class="tools">
+          <button class="btn ghost sm" id="btnAddLane">Add team</button>
+          <button class="btn ghost sm" id="btnAddPhase">Add phase</button>
+          <button class="btn alt sm" id="btnTemplate">Load baseline template</button>
+          <button class="btn ghost sm" id="btnClearSwim">Clear</button>
+        </div>
+      </div>
+      <div class="lanebar" id="laneBar"></div>
+      <div class="lanebar" id="phaseBar" style="border-bottom:1px solid var(--line)"></div>
+      <div class="swimwrap"><div class="swim" id="swim"></div></div>
+      <div id="editor"></div>
+    </div>
+
+    <div class="note">
+      Cells with a teal underline are steps you have already flagged as automatable in step 4. A dashed border means the step runs in parallel and is off the critical path, so it adds no lead time even though it still consumes someone's day.
+    </div>
+  </section>
+
+  <!-- ============ STEP 3 ============ -->
+  <section class="step" data-step="2">
+    <div class="eyebrow">Step 3 of 6</div>
+    <h1>Time every step</h1>
+    <p class="lede">Two numbers per step. Work is hands on keyboard. Wait is everything else: sitting in a queue, waiting for the next team to pick it up, waiting for Thursday's CAB. Type durations naturally, so 45m, 4h, 3d or 1.5d all work. The bar underneath rebuilds as you type.</p>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Step timings</h2><span class="hint" id="ttHint"></span>
+        <div class="tools"><button class="btn ghost sm" id="btnGoSwim">Back to the swimlane</button></div>
+      </div>
+      <div class="panel-body tight" id="timingTable"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Total time to complete</h2><span class="hint">Critical path, request received to work completed</span></div>
+      <div id="leadCurrent"></div>
+    </div>
+
+    <div id="timeCards"></div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Where the time goes, by team</h2></div>
+      <div class="brk" id="brkLane"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Where the time goes, by phase</h2></div>
+      <div class="brk" id="brkPhase"></div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 4 ============ -->
+  <section class="step" data-step="3">
+    <div class="eyebrow">Step 4 of 6</div>
+    <h1>Automation opportunity</h1>
+    <p class="lede">Take each step and answer one question: does VCF 9.1 do this for us? Pick the capability, then say whether it removes the step entirely, does the whole thing unattended, or just takes the manual edges off. The target state in the next step is calculated from these answers.</p>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Step by step assessment</h2><span class="hint" id="autoHint"></span>
+        <div class="tools"><button class="btn ghost sm" id="btnSuggest">Suggest mappings</button></div>
+      </div>
+      <div class="panel-body tight" id="autoTable"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Quick wins</h2><span class="hint">Ranked by time removed against implementation effort</span></div>
+      <div id="quickWins"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Capability coverage</h2><span class="hint">Which VCF 9.1 capabilities this environment needs</span></div>
+      <div class="brk" id="capCoverage"></div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 5 ============ -->
+  <section class="step" data-step="4">
+    <div class="eyebrow">Step 5 of 6</div>
+    <h1>Target state</h1>
+    <p class="lede">The same process with the automation applied. Both bars are drawn to the same scale, so the second one being a sliver of the first is the whole argument in one picture.</p>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Current state</h2></div>
+      <div id="leadCmpCur"></div>
+      <div class="panel-head" style="border-top:1px solid var(--line)"><h2>Target state with VCF 9.1</h2></div>
+      <div id="leadCmpTgt"></div>
+    </div>
+
+    <div id="cmpCards"></div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Before and after</h2></div>
+      <div class="panel-body"><table class="cmp" id="cmpTable"></table></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>What is left in the target state</h2><span class="hint">The steps that still cost real time once automation is in</span></div>
+      <div id="residual"></div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>What gets eliminated</h2></div>
+      <ul class="elim" id="elimList"></ul>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2>Implementation roadmap</h2><span class="hint">Three phases over roughly sixteen weeks</span></div>
+      <div id="roadmap"></div>
+    </div>
+  </section>
+
+  <!-- ============ STEP 6 ============ -->
+  <section class="step" data-step="5">
+    <div class="eyebrow">Step 6 of 6</div>
+    <h1>Findings and export</h1>
+    <p class="lede">A read only view of everything you captured, ready to paste into a report or hand back to the customer.</p>
+    <div id="findings"></div>
+  </section>
+
+  <div class="credit">Service Request Management discovery tool. Built by Kunthaka Nilaweera, Broadcom.</div>
+</div>
+</main>
+
+<div class="footbar">
+  <div class="wrap">
+    <span class="status" id="saveStatus">Saved locally</span>
+    <button class="btn ghost sm" id="btnBlank">Start blank</button>
+    <button class="btn alt sm" id="btnLoad">Load a saved file</button>
+    <input type="file" id="fileIn" accept=".json" hidden>
+    <button class="btn alt" id="btnPrev">Back</button>
+    <button class="btn blue" id="btnNext">Next</button>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+/* ======================= REFERENCE DATA ======================= */
+
+var TOOLS=["ServiceNow ITSM","BMC Remedy","Jira Service Management","Cherwell or Ivanti","Freshservice",
+"Home grown request forms","Email and spreadsheets only","VCF Automation (Aria Automation) already deployed",
+"vRealize or Aria Orchestrator","Infoblox IPAM","BlueCat IPAM","NSX IPAM","Microsoft Active Directory",
+"Microsoft DNS","Terraform or Ansible","Commvault","NetApp SnapCenter","Veeam","Nagios or Zabbix",
+"VCF Operations (Aria Operations)","Tenable or Qualys","SentinelOne or CrowdStrike"];
+
+var CAPS=[
+  {id:"cat",name:"VCF Automation Service Catalog",effort:"Low",tw:15,twait:0,
+   how:"Publish a catalog item in VCF Automation. The requester selects it from the self-service portal and every VM parameter flows straight into the workflow, which removes the transcription step and standardises the request data from the start."},
+  {id:"appr",name:"VCF Automation Approval Policies",effort:"Low",tw:10,twait:120,
+   how:"Multi-tier approval policies with one click approve or reject from the email itself. The status writes back to the ITSM ticket over REST, so nobody has to go and look."},
+  {id:"sectag",name:"VCF Automation Extensibility and Tags",effort:"Medium",tw:15,twait:0,
+   how:"Security policy is assigned automatically from environment and classification tags. The security team reviews the assignment rather than authoring an impact analysis from a blank page."},
+  {id:"itsmchg",name:"VCF Automation ITSM Integration",effort:"Medium",tw:0,twait:0,
+   how:"Orchestrator creates the change record in ServiceNow or Remedy the moment the provisioning workflow is triggered, with every field pre-populated from the request."},
+  {id:"nscap",name:"VCF Automation Namespace Capture (new in 9.1)",effort:"Low",tw:30,twait:0,
+   how:"Capture an existing, manually built environment directly into a reusable YAML blueprint. This is how you get a working baseline blueprint in minutes for VM types that already exist somewhere, instead of authoring one from scratch."},
+  {id:"day1",name:"Day-1 Blueprint with VM Service Fast-Deploy",effort:"Medium",tw:2,twait:0,
+   how:"The cloud template automates clone, sizing, network assignment, hostname and IP, domain join and OU placement. Fast-Deploy with linked clone, new in 9.1, takes the clone itself down to near instant for supported OS templates."},
+  {id:"ipam",name:"VCF Automation with IPAM integration",effort:"Medium",tw:0,twait:0,
+   how:"NSX IPAM, or Infoblox and BlueCat through the Orchestrator plugin. The IP is assigned and the DNS record created at deploy time, so the address request queue disappears."},
+  {id:"ad",name:"VCF Automation Orchestrator, Active Directory plugin",effort:"Low",tw:0,twait:0,
+   how:"The pre-built Active Directory workflow creates the computer object and moves it to the correct OU by environment tag, running as part of the day-1 blueprint."},
+  {id:"day2mon",name:"Day-2 action with VCF Operations agent",effort:"Low",tw:0,twait:0,
+   how:"A day-2 action deploys the agent after provisioning. The VM is discovered in VCF Operations within minutes and alert policies are applied by tag."},
+  {id:"bkp",name:"VCF Automation Extensibility, backup registration",effort:"Medium",tw:0,twait:0,
+   how:"A post-deployment extensibility subscription registers the VM with the backup platform over API, with the policy chosen by environment and SLA tier tag."},
+  {id:"cmdb",name:"VCF Automation with ServiceNow CMDB",effort:"Medium",tw:0,twait:0,
+   how:"An extensibility subscription calls the CMDB API on completion and creates the CI record with all required fields taken from VCF Automation properties."},
+  {id:"close",name:"VCF Automation ITSM ticket closure",effort:"Low",tw:0,twait:0,
+   how:"Orchestrator closes the ticket, updates the required fields and emails the requester a provisioning summary with the VM details and access instructions."}
+];
+var CAPBY={}; CAPS.forEach(function(c){CAPBY[c.id]=c;});
+
+var LVLS=[
+  {id:"none",label:"Stays manual"},
+  {id:"partial",label:"Partly automated"},
+  {id:"full",label:"Fully automated"},
+  {id:"remove",label:"Step disappears"}
+];
+var LVLWORD={none:"Stays manual",partial:"Partly automated",full:"Fully automated",remove:"Step disappears"};
+
+var PALETTE=["#6EA8DC","#E8C88F","#C3AED6","#9CC7E8","#7C8BD9","#F0B27A","#7FC8A9","#E8A0A0",
+"#C9DFA0","#B9A7D9","#9AA7D9","#8FD0C8","#DDB6C6","#A8B8C8"];
+
+var D=1440;
+
+/* baseline template, a generic 40 to 45 day enterprise provisioning process */
+var TEMPLATE={
+  lanes:[
+    {id:"l1",name:"Requester",color:"#6EA8DC"},
+    {id:"l2",name:"ITPM",color:"#E8C88F"},
+    {id:"l3",name:"Security (ISO)",color:"#C3AED6"},
+    {id:"l4",name:"Change Mgmt (ECM)",color:"#9CC7E8"},
+    {id:"l5",name:"Eng Review Board",color:"#7C8BD9"},
+    {id:"l6",name:"Change Control Board",color:"#F0B27A"},
+    {id:"l7",name:"Engineering (EIS)",color:"#7FC8A9"},
+    {id:"l8",name:"Monitoring team",color:"#E8A0A0"},
+    {id:"l9",name:"Patching team",color:"#C9DFA0"},
+    {id:"l10",name:"Backup team",color:"#B9A7D9"},
+    {id:"l11",name:"CMDB team",color:"#9AA7D9"}
+  ],
+  phases:[
+    {id:"p1",name:"Request"},{id:"p2",name:"Approval"},{id:"p3",name:"Security review"},
+    {id:"p4",name:"Change control"},{id:"p5",name:"Build and configure"},
+    {id:"p6",name:"Post-build registration"},{id:"p7",name:"Closure"}
+  ],
+  steps:[
+    ["l1","p1","Create request proposal",60,0,0,"cat","full"],
+    ["l1","p1","Send proposal to ITPM for approval",15,7*D,0,"cat","remove"],
+    ["l2","p2","Evaluate request",120,2*D,0,"appr","full"],
+    ["l2","p2","Approval decision",30,0,0,"appr","full"],
+    ["l2","p2","Forward to security for impact analysis",15,1*D,0,"sectag","remove"],
+    ["l3","p3","Notify ITPM of approval",15,0,0,"itsmchg","remove"],
+    ["l3","p3","Create security impact analysis",240,5*D,0,"sectag","remove"],
+    ["l3","p3","Evaluate security impact",120,2*D,0,"sectag","full"],
+    ["l2","p4","Send hardware request to review board",15,1*D,0,"itsmchg","remove"],
+    ["l4","p4","Receive hardware request form",15,0,0,"itsmchg","remove"],
+    ["l4","p4","Review for change approval",30,1*D,0,"itsmchg","full"],
+    ["l4","p4","Notify ITPM of approval",15,0,0,"close","remove"],
+    ["l5","p4","Send request to CCB for change approval",15,7*D,0,"itsmchg","remove"],
+    ["l5","p4","Review hardware request form",60,4*D,0,"itsmchg","remove"],
+    ["l6","p4","Create provisioning task in Remedy",30,0,0,"itsmchg","full"],
+    ["l6","p4","Review change request at weekly CAB",60,8*D,0,"itsmchg","remove"],
+    ["l7","p5","Assign VM name",10,0,0,"day1","full"],
+    ["l7","p5","Obtain IP address",20,240,0,"ipam","full"],
+    ["l7","p5","Deploy VM from template",45,0,0,"day1","full"],
+    ["l7","p5","Create DNS record",15,120,0,"ipam","full"],
+    ["l7","p5","Create AD object and move to OU",20,0,0,"ad","full"],
+    ["l7","p5","Update AD object description with CR number",10,0,0,"ad","full"],
+    ["l7","p5","Update VM notes field with CR number",10,0,0,"itsmchg","full"],
+    ["l7","p5","Deploy endpoint security agent",30,0,0,"day2mon","full"],
+    ["l7","p5","Deploy COTS applications and software",120,2*D,0,"day2mon","partial"],
+    ["l7","p5","Run vulnerability scan",60,240,0,"day2mon","full"],
+    ["l7","p5","Resolve security findings",120,1*D,0,"","partial"],
+    ["l8","p6","Add VM to monitoring platform",30,2*D,1,"day2mon","full"],
+    ["l9","p6","Add VM to patching group",30,2*D,1,"day2mon","full"],
+    ["l10","p6","Add VM to backup policy",15,1*D,1,"bkp","full"],
+    ["l11","p6","Create CI record in CMDB",30,2*D,1,"cmdb","full"],
+    ["l7","p7","Notify change management and requester",15,0,0,"close","full"],
+    ["l1","p7","Confirm delivery and close request",15,1*D,0,"close","remove"]
+  ]
+};
+
+var ROADMAP=[
+  {id:"ph1",name:"Phase 1, foundation",weeks:"Weeks 1 to 4",items:[
+    "VCF Automation catalog item published for the standard VM request",
+    "Approval policy configured and replacing the email chain",
+    "ITSM integration in place, read and write",
+    "Requester self-service portal launched",
+    "Namespace Capture run against existing reference VMs to seed the first blueprints"]},
+  {id:"ph2",name:"Phase 2, deployment",weeks:"Weeks 5 to 10",items:[
+    "Production ready VM blueprints for every OS type in scope",
+    "Fast-Deploy linked clone enabled for supported templates",
+    "IPAM integration delivering automated IP and DNS",
+    "Active Directory integration for domain join and OU placement",
+    "Security agent day-2 actions",
+    "VCF Operations monitoring registration on deployment"]},
+  {id:"ph3",name:"Phase 3, closure and lifecycle",weeks:"Weeks 11 to 16",items:[
+    "Backup platform integration",
+    "CMDB CI record auto-creation",
+    "ITSM ticket auto-closure and requester notification",
+    "VM lifecycle day-2 actions: resize, snapshot, decommission",
+    "Reporting and compliance dashboards"]}
+];
+
+/* ======================= STATE ======================= */
+var KEY="vcf_srm_discovery_v1";
+var META_IDS=["account","date","consultant","contact","service","version","volume","quoted","teams",
+"target","belief","pain","toolsOther"];
+var state=blankState();
+var seq=[];            /* ordered steps on and off the critical path */
+var uidn=1;
+
+function blankState(){
+  return {meta:{},tools:[],lanes:[],phases:[],steps:[],road:{},sel:null,step:0};
+}
+function uid(p){return p+(Date.now().toString(36))+(uidn++).toString(36);}
+
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(state));flash("Saved locally");}
+  catch(e){flash("Could not save to this browser");}
+}
+function load(){
+  try{
+    var raw=localStorage.getItem(KEY); if(!raw) return false;
+    var p=JSON.parse(raw);
+    if(!p||!p.steps) return false;
+    state=normalizeState(p);
+    return true;
+  }catch(e){return false;}
+}
+function normalizeState(p){
+  var s=blankState();
+  s.meta=p.meta||{}; s.tools=p.tools||[]; s.road=p.road||{}; s.step=p.step||0;
+  s.lanes=(p.lanes||[]).map(function(l,i){return {id:l.id||("l"+i),name:l.name||"Team "+(i+1),color:l.color||PALETTE[i%PALETTE.length]};});
+  s.phases=(p.phases||[]).map(function(f,i){return {id:f.id||("p"+i),name:f.name||"Phase "+(i+1)};});
+  s.steps=(p.steps||[]).map(function(t,i){
+    return {id:t.id||("s"+i),lane:t.lane,phase:t.phase,name:t.name||"Untitled step",
+      w:+t.w||0,wait:+t.wait||0,par:!!t.par,cap:t.cap||"",lvl:t.lvl||"none",
+      tw:(t.tw===null||t.tw===undefined||t.tw==="")?null:+t.tw,
+      twait:(t.twait===null||t.twait===undefined||t.twait==="")?null:+t.twait,
+      note:t.note||""};
+  });
+  /* drop steps pointing at lanes or phases that no longer exist */
+  var lids={},pids={};
+  s.lanes.forEach(function(l){lids[l.id]=1;}); s.phases.forEach(function(f){pids[f.id]=1;});
+  s.steps=s.steps.filter(function(t){return lids[t.lane]&&pids[t.phase];});
+  s.sel=null;
+  return s;
+}
+var flashT;
+function flash(msg){
+  var e=document.getElementById("saveStatus"); e.textContent=msg;
+  clearTimeout(flashT); flashT=setTimeout(function(){e.textContent="Saved locally";},1800);
+}
+
+/* ======================= HELPERS ======================= */
+function el(tag,cls,txt){var n=document.createElement(tag); if(cls)n.className=cls; if(txt!=null)n.textContent=txt; return n;}
+function byId(id){return document.getElementById(id);}
+function today(){return new Date().toISOString().slice(0,10);}
+function esc(v){v=(v==null?"":String(v)); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function laneOf(id){for(var i=0;i<state.lanes.length;i++) if(state.lanes[i].id===id) return state.lanes[i]; return null;}
+function phaseOf(id){for(var i=0;i<state.phases.length;i++) if(state.phases[i].id===id) return state.phases[i]; return null;}
+function phaseIdx(id){for(var i=0;i<state.phases.length;i++) if(state.phases[i].id===id) return i; return 999;}
+function stepOf(id){for(var i=0;i<state.steps.length;i++) if(state.steps[i].id===id) return state.steps[i]; return null;}
+
+function parseDur(s){
+  if(s==null) return 0;
+  s=String(s).trim().toLowerCase();
+  if(!s) return 0;
+  var re=/(\d+(?:\.\d+)?)\s*(weeks|week|wks|wk|w|days|day|d|hours|hour|hrs|hr|h|minutes|minute|mins|min|m)?/g;
+  var total=0,found=false,mch;
+  while((mch=re.exec(s))!==null){
+    if(!mch[0].trim()) { if(re.lastIndex>=s.length) break; re.lastIndex++; continue; }
+    var v=parseFloat(mch[1]); if(isNaN(v)) continue;
+    var u=(mch[2]||"m").charAt(0);
+    if(u==="w") total+=v*7*D;
+    else if(u==="d") total+=v*D;
+    else if(u==="h") total+=v*60;
+    else total+=v;
+    found=true;
+  }
+  return found?Math.round(total):0;
+}
+function fmt(m){
+  m=Math.round(m||0);
+  if(m<=0) return "0";
+  var d=Math.floor(m/D), h=Math.floor((m%D)/60), mm=m%60, out=[];
+  if(d) out.push(d+"d");
+  if(h) out.push(h+"h");
+  if(mm&&!d) out.push(mm+"m");
+  return out.join(" ");
+}
+function fmtDays(m){
+  m=Math.max(0,m||0);
+  if(m===0) return "0";
+  if(m<60) return Math.round(m)+" min";
+  if(m<D){
+    var h=(m/60).toFixed(m<300?1:0).replace(/\.0$/,"");
+    return h+(h==="1"?" hr":" hrs");
+  }
+  var d=(m/D).toFixed(1).replace(/\.0$/,"");
+  return d+(d==="1"?" day":" days");
+}
+function pctStr(n){return Math.round(n)+"%";}
+
+/* sequence: phase order first, array order within */
+function rebuildSeq(){
+  var idx={}; state.steps.forEach(function(s,i){idx[s.id]=i;});
+  var sorted=state.steps.slice().sort(function(a,b){
+    var d=phaseIdx(a.phase)-phaseIdx(b.phase);
+    return d!==0?d:(idx[a.id]-idx[b.id]);
+  });
+  state.steps=sorted;
+  seq=sorted;
+}
+
+/* ---- current state maths ---- */
+function critical(){return seq.filter(function(s){return !s.par;});}
+function parallel(){return seq.filter(function(s){return s.par;});}
+function totals(){
+  var w=0,q=0;
+  critical().forEach(function(s){w+=s.w;q+=s.wait;});
+  var pw=0,pq=0;
+  parallel().forEach(function(s){pw+=s.w;pq+=s.wait;});
+  return {work:w,wait:q,lead:w+q,parWork:pw,parWait:pq,
+    effort:w+pw, eff:(w+q)?(w/(w+q)*100):0};
+}
+/* ---- target state maths ---- */
+function targetOf(s){
+  if(s.lvl==="remove") return {w:0,wait:0,gone:true};
+  var cap=CAPBY[s.cap];
+  var w,q;
+  if(s.lvl==="full"){ w=cap?cap.tw:2; q=cap?cap.twait:0; }
+  else if(s.lvl==="partial"){ w=Math.round(s.w*0.5); q=Math.round(s.wait*0.25); if(cap) w=Math.max(w,cap.tw); }
+  else { w=s.w; q=s.wait; }
+  if(s.tw!==null&&s.tw!==undefined) w=s.tw;
+  if(s.twait!==null&&s.twait!==undefined) q=s.twait;
+  return {w:w,wait:q,gone:false};
+}
+function targetTotals(){
+  var w=0,q=0,pw=0,pq=0,kept=0,gone=0;
+  seq.forEach(function(s){
+    var t=targetOf(s);
+    if(t.gone||(t.w===0&&t.wait===0&&s.lvl!=="none")){ if(t.gone) gone++; }
+    if(!t.gone) kept++;
+    if(s.par){pw+=t.w;pq+=t.wait;} else {w+=t.w;q+=t.wait;}
+  });
+  return {work:w,wait:q,lead:w+q,parWork:pw,parWait:pq,effort:w+pw,
+    eff:(w+q)?(w/(w+q)*100):100,kept:kept,gone:gone};
+}
+function teamsInvolved(which){
+  /* a team is involved if a person there still has to do something */
+  var set={};
+  seq.forEach(function(s){
+    if(which==="target" && targetOf(s).w<=0) return;
+    set[s.lane]=1;
+  });
+  return Object.keys(set).length;
+}
+function manualSteps(which){
+  var n=0;
+  seq.forEach(function(s){
+    if(which==="target"){
+      var t=targetOf(s);
+      if(t.gone) return;
+      if(s.lvl==="full") return;
+      n++;
+    } else n++;
+  });
+  return n;
+}
+
+/* ======================= STEP 1: tools ======================= */
+function renderTools(){
+  var box=byId("toolChecks"); box.innerHTML="";
+  TOOLS.forEach(function(t){
+    var lab=el("label","chk"); if(state.tools.indexOf(t)>-1) lab.classList.add("sel");
+    var cb=el("input"); cb.type="checkbox"; cb.checked=state.tools.indexOf(t)>-1;
+    cb.addEventListener("change",function(){
+      var i=state.tools.indexOf(t);
+      if(cb.checked&&i<0)state.tools.push(t); else if(!cb.checked&&i>-1)state.tools.splice(i,1);
+      lab.classList.toggle("sel",cb.checked); save();
+    });
+    lab.appendChild(cb); lab.appendChild(el("span",null,t)); box.appendChild(lab);
+  });
+}
+
+/* ======================= STEP 2: swimlane ======================= */
+var dragId=null;
+
+function renderLaneBar(){
+  var bar=byId("laneBar"); bar.innerHTML="";
+  bar.appendChild(el("span",null,"Teams:")).style.cssText="font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-right:4px";
+  if(!state.lanes.length) bar.appendChild(el("span",null,"None yet. Add a team or load the baseline template.")).style.cssText="font-size:12.5px;color:var(--muted)";
+  state.lanes.forEach(function(l,i){
+    var t=el("div","tokrow");
+    var sw=el("i","sw"); sw.style.background=l.color; t.appendChild(sw);
+    var inp=el("input"); inp.type="text"; inp.value=l.name;
+    inp.addEventListener("input",function(){l.name=inp.value; save(); renderSwim(); renderTiming(); renderAuto();});
+    t.appendChild(inp);
+    var col=el("input","col"); col.type="color"; col.value=l.color; col.title="Lane colour";
+    col.addEventListener("input",function(){l.color=col.value; sw.style.background=col.value; save(); renderSwim();});
+    t.appendChild(col);
+    var up=el("button",null,"↑"); up.title="Move up";
+    up.addEventListener("click",function(){ if(i>0){var a=state.lanes.splice(i,1)[0]; state.lanes.splice(i-1,0,a); save(); renderAll();} });
+    t.appendChild(up);
+    var dn=el("button",null,"↓"); dn.title="Move down";
+    dn.addEventListener("click",function(){ if(i<state.lanes.length-1){var a=state.lanes.splice(i,1)[0]; state.lanes.splice(i+1,0,a); save(); renderAll();} });
+    t.appendChild(dn);
+    var rm=el("button",null,"×"); rm.title="Remove team and its steps";
+    rm.addEventListener("click",function(){
+      var n=state.steps.filter(function(s){return s.lane===l.id;}).length;
+      if(n&&!confirm("Remove "+l.name+" and its "+n+" step"+(n===1?"":"s")+"?")) return;
+      state.steps=state.steps.filter(function(s){return s.lane!==l.id;});
+      state.lanes.splice(i,1); state.sel=null; save(); renderAll();
+    });
+    t.appendChild(rm);
+    bar.appendChild(t);
+  });
+}
+function renderPhaseBar(){
+  var bar=byId("phaseBar"); bar.innerHTML="";
+  bar.appendChild(el("span",null,"Phases:")).style.cssText="font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-right:4px";
+  state.phases.forEach(function(p,i){
+    var t=el("div","tokrow");
+    var inp=el("input"); inp.type="text"; inp.value=p.name; inp.style.width="13ch";
+    inp.addEventListener("input",function(){p.name=inp.value; save(); renderSwim(); renderTiming(); renderBreakdowns();});
+    t.appendChild(inp);
+    var lf=el("button",null,"←"); lf.title="Move left";
+    lf.addEventListener("click",function(){ if(i>0){var a=state.phases.splice(i,1)[0]; state.phases.splice(i-1,0,a); save(); renderAll();} });
+    t.appendChild(lf);
+    var rt=el("button",null,"→"); rt.title="Move right";
+    rt.addEventListener("click",function(){ if(i<state.phases.length-1){var a=state.phases.splice(i,1)[0]; state.phases.splice(i+1,0,a); save(); renderAll();} });
+    t.appendChild(rt);
+    var rm=el("button",null,"×"); rm.title="Remove phase and its steps";
+    rm.addEventListener("click",function(){
+      var n=state.steps.filter(function(s){return s.phase===p.id;}).length;
+      if(n&&!confirm("Remove "+p.name+" and its "+n+" step"+(n===1?"":"s")+"?")) return;
+      state.steps=state.steps.filter(function(s){return s.phase!==p.id;});
+      state.phases.splice(i,1); state.sel=null; save(); renderAll();
+    });
+    t.appendChild(rm);
+    bar.appendChild(t);
+  });
+}
+
+function renderSwim(){
+  var g=byId("swim"); g.innerHTML="";
+  if(!state.lanes.length||!state.phases.length){
+    g.style.gridTemplateColumns="1fr";
+    var e=el("div","empty","Add at least one team and one phase, or load the baseline template to start from a straw man.");
+    g.appendChild(e); return;
+  }
+  rebuildSeq();
+  g.style.gridTemplateColumns="minmax(140px,168px) repeat("+state.phases.length+",minmax(190px,1fr))";
+
+  var corner=el("div","hcell corner");
+  corner.appendChild(el("span","pname","Team"));
+  g.appendChild(corner);
+  state.phases.forEach(function(p){
+    var h=el("div","hcell");
+    h.appendChild(el("span","pname",p.name));
+    var mins=0;
+    seq.forEach(function(s){ if(s.phase===p.id&&!s.par) mins+=s.w+s.wait; });
+    h.appendChild(el("span","ptime",fmtDays(mins)));
+    g.appendChild(h);
+  });
+
+  state.lanes.forEach(function(l){
+    var lc=el("div","lcell");
+    var nm=el("div","lname");
+    var sw=el("i","lswatch"); sw.style.background=l.color; nm.appendChild(sw);
+    nm.appendChild(el("span",null,l.name)); lc.appendChild(nm);
+    var lw=0,lq=0,cnt=0;
+    seq.forEach(function(s){ if(s.lane===l.id){lw+=s.w;lq+=s.wait;cnt++;} });
+    lc.appendChild(el("div","ltime",cnt?(cnt+" step"+(cnt===1?"":"s")+" · "+fmt(lw)+" work"):"no steps"));
+    g.appendChild(lc);
+
+    state.phases.forEach(function(p){
+      var cell=el("div","cell");
+      cell.dataset.lane=l.id; cell.dataset.phase=p.id;
+      seq.forEach(function(s){ if(s.lane===l.id&&s.phase===p.id) cell.appendChild(chipFor(s)); });
+      var add=el("button","add","+ step");
+      add.addEventListener("click",function(){addStep(l.id,p.id);});
+      cell.appendChild(add);
+      cell.addEventListener("dragover",function(ev){ev.preventDefault();cell.classList.add("drop");});
+      cell.addEventListener("dragleave",function(){cell.classList.remove("drop");});
+      cell.addEventListener("drop",function(ev){
+        ev.preventDefault(); cell.classList.remove("drop");
+        dropStep(dragId,l.id,p.id,null);
+      });
+      g.appendChild(cell);
+    });
+  });
+}
+function chipFor(s){
+  var l=laneOf(s.lane);
+  var c=el("div","chip"); c.draggable=true; c.dataset.id=s.id;
+  if(l) c.style.borderLeftColor=l.color;
+  if(state.sel===s.id) c.classList.add("sel");
+  if(s.par) c.classList.add("par");
+  if(s.lvl&&s.lvl!=="none") c.classList.add("autoable");
+  c.appendChild(el("span","cname",s.name));
+  var t=el("span","ctime");
+  t.appendChild(el("span","w",fmt(s.w)+" work"));
+  if(s.wait>0) t.appendChild(el("span","q","+"+fmt(s.wait)+" wait"));
+  c.appendChild(t);
+  if(s.lvl==="remove") c.appendChild(el("span","cbadge","GONE"));
+  else if(s.lvl==="full") c.appendChild(el("span","cbadge","AUTO"));
+  else if(s.lvl==="partial") c.appendChild(el("span","cbadge","PART"));
+  c.addEventListener("click",function(ev){ev.stopPropagation(); select(s.id);});
+  c.addEventListener("dragstart",function(ev){
+    dragId=s.id; c.classList.add("dragging");
+    try{ev.dataTransfer.setData("text/plain",s.id);}catch(e){}
+    ev.dataTransfer.effectAllowed="move";
+  });
+  c.addEventListener("dragend",function(){c.classList.remove("dragging"); clearInsert();});
+  c.addEventListener("dragover",function(ev){
+    ev.preventDefault(); ev.stopPropagation();
+    clearInsert(); c.classList.add("insert");
+  });
+  c.addEventListener("drop",function(ev){
+    ev.preventDefault(); ev.stopPropagation(); clearInsert();
+    dropStep(dragId,s.lane,s.phase,s.id);
+  });
+  return c;
+}
+function clearInsert(){
+  var ns=document.querySelectorAll(".chip.insert");
+  for(var i=0;i<ns.length;i++) ns[i].classList.remove("insert");
+  var cs=document.querySelectorAll(".cell.drop");
+  for(var j=0;j<cs.length;j++) cs[j].classList.remove("drop");
+}
+function dropStep(id,laneId,phaseId,beforeId){
+  if(!id||id===beforeId) return;
+  var s=stepOf(id); if(!s) return;
+  var i=state.steps.indexOf(s);
+  state.steps.splice(i,1);
+  s.lane=laneId; s.phase=phaseId;
+  if(beforeId){
+    var b=stepOf(beforeId);
+    var bi=state.steps.indexOf(b);
+    state.steps.splice(bi<0?state.steps.length:bi,0,s);
+  } else {
+    var last=-1;
+    state.steps.forEach(function(t,k){ if(t.phase===phaseId) last=k; });
+    state.steps.splice(last+1,0,s);
+  }
+  dragId=null; save(); renderAll();
+}
+function addStep(laneId,phaseId){
+  var s={id:uid("s"),lane:laneId,phase:phaseId,name:"New step",w:30,wait:0,par:false,
+    cap:"",lvl:"none",tw:null,twait:null,note:""};
+  var last=-1;
+  state.steps.forEach(function(t,k){ if(t.phase===phaseId) last=k; });
+  state.steps.splice(last+1,0,s);
+  state.sel=s.id; save(); renderAll();
+  var f=byId("e_name"); if(f){f.focus(); f.select();}
+}
+function select(id){ state.sel=id; save(); renderSwim(); renderEditor(); }
+
+function renderEditor(){
+  var box=byId("editor"); box.innerHTML="";
+  var s=state.sel?stepOf(state.sel):null;
+  if(!s){
+    box.className="";
+    box.appendChild(el("div","eempty","Click a step to edit its name, timings and automation mapping. Drag a step to move it to another team or phase."));
+    return;
+  }
+  box.className="editor";
+  var l=laneOf(s.lane), p=phaseOf(s.phase);
+  var ttl=el("div","etitle");
+  ttl.appendChild(el("span",null,"Selected step"));
+  ttl.appendChild(el("span","kbd",(l?l.name:"?")+" · "+(p?p.name:"?")));
+  box.appendChild(ttl);
+
+  var g=el("div","grid g3");
+  g.appendChild(field("Step name","text","e_name",s.name,function(v){s.name=v; touch(true);}));
+  g.appendChild(durField("Work time","e_w",s.w,"w",function(v){s.w=v; touch(true);}));
+  g.appendChild(durField("Wait or queue time","e_q",s.wait,"q",function(v){s.wait=v; touch(true);}));
+  box.appendChild(g);
+
+  var g2=el("div","grid g3"); g2.style.marginTop="14px";
+  g2.appendChild(selField("Team","e_lane",state.lanes.map(function(x){return [x.id,x.name];}),s.lane,function(v){s.lane=v; touch(true);}));
+  g2.appendChild(selField("Phase","e_phase",state.phases.map(function(x){return [x.id,x.name];}),s.phase,function(v){s.phase=v; touch(true);}));
+  var pw=el("label","f");
+  pw.appendChild(el("span",null,"Runs in parallel"));
+  var pl=el("label","chk");
+  var pc=el("input"); pc.type="checkbox"; pc.checked=!!s.par;
+  pc.addEventListener("change",function(){s.par=pc.checked; touch(true);});
+  pl.appendChild(pc); pl.appendChild(el("span",null,"Off the critical path, adds no lead time"));
+  if(s.par) pl.classList.add("sel");
+  pw.appendChild(pl); g2.appendChild(pw);
+  box.appendChild(g2);
+
+  var g3=el("div","grid g3"); g3.style.marginTop="14px";
+  var caps=[["","Not assessed yet"]].concat(CAPS.map(function(c){return [c.id,c.name+" ("+c.effort+")"];}));
+  g3.appendChild(selField("VCF 9.1 capability","e_cap",caps,s.cap,function(v){s.cap=v; if(v&&s.lvl==="none")s.lvl="full"; touch(true); renderEditor();}));
+  g3.appendChild(selField("What automation does to it","e_lvl",LVLS.map(function(x){return [x.id,x.label];}),s.lvl,function(v){s.lvl=v; touch(true); renderEditor();}));
+  var tgt=targetOf(s);
+  g3.appendChild(field("Notes","text","e_note",s.note,function(v){s.note=v; touch(false);}));
+  box.appendChild(g3);
+
+  var g4=el("div","grid g3"); g4.style.marginTop="14px";
+  g4.appendChild(durField("Target work time","e_tw",tgt.w,"w",function(v){s.tw=v; touch(true);}));
+  g4.appendChild(durField("Target wait time","e_twait",tgt.wait,"q",function(v){s.twait=v; touch(true);}));
+  var rst=el("label","f");
+  rst.appendChild(el("span",null,"Target overrides"));
+  var rb=el("button","btn ghost sm",(s.tw!==null||s.twait!==null)?"Reset to calculated":"Calculated from the mapping");
+  rb.disabled=(s.tw===null&&s.twait===null);
+  rb.addEventListener("click",function(){s.tw=null;s.twait=null;touch(true);renderEditor();});
+  rst.appendChild(rb); g4.appendChild(rst);
+  box.appendChild(g4);
+
+  if(s.cap&&CAPBY[s.cap]){
+    var hb=el("div","howbox");
+    hb.appendChild(el("b",null,CAPBY[s.cap].name+", "+CAPBY[s.cap].effort+" effort. "));
+    hb.appendChild(el("span",null,CAPBY[s.cap].how));
+    box.appendChild(hb);
+  }
+
+  var row=el("div"); row.style.cssText="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap";
+  var dup=el("button","btn ghost sm","Duplicate");
+  dup.addEventListener("click",function(){
+    var c=JSON.parse(JSON.stringify(s)); c.id=uid("s"); c.name=s.name+" (copy)";
+    state.steps.splice(state.steps.indexOf(s)+1,0,c); state.sel=c.id; save(); renderAll();
+  });
+  row.appendChild(dup);
+  var del=el("button","btn danger sm","Delete step");
+  del.addEventListener("click",function(){
+    state.steps.splice(state.steps.indexOf(s),1); state.sel=null; save(); renderAll();
+  });
+  row.appendChild(del);
+  box.appendChild(row);
+
+  function touch(redrawChip){
+    save();
+    if(redrawChip){ renderSwim(); refreshHeader(); }
+  }
+}
+function field(label,type,id,val,onchange){
+  var w=el("label","f"); w.appendChild(el("span",null,label));
+  var i=el("input"); i.type=type; i.id=id; i.value=val==null?"":val;
+  i.addEventListener("input",function(){onchange(i.value);});
+  w.appendChild(i); return w;
+}
+function durField(label,id,mins,kind,onchange){
+  var w=el("label","f"); w.appendChild(el("span",null,label));
+  var i=el("input"); i.type="text"; i.id=id; i.className="dur "+kind; i.value=fmt(mins);
+  i.style.width="100%"; i.style.textAlign="left"; i.style.fontFamily="var(--mono)";
+  i.placeholder="e.g. 45m, 4h, 3d";
+  i.addEventListener("input",function(){onchange(parseDur(i.value));});
+  i.addEventListener("blur",function(){i.value=fmt(parseDur(i.value));});
+  w.appendChild(i); return w;
+}
+function selField(label,id,pairs,val,onchange){
+  var w=el("label","f"); w.appendChild(el("span",null,label));
+  var s=el("select"); s.id=id;
+  pairs.forEach(function(p){
+    var o=el("option",null,p[1]); o.value=p[0]; if(p[0]===val) o.selected=true; s.appendChild(o);
+  });
+  s.addEventListener("change",function(){onchange(s.value);});
+  w.appendChild(s); return w;
+}
+
+/* ======================= STEP 3: timing ======================= */
+function renderTiming(){
+  var box=byId("timingTable"); box.innerHTML="";
+  rebuildSeq();
+  byId("ttHint").textContent=seq.length?(seq.length+" steps"):"";
+  if(!seq.length){ box.appendChild(el("div","empty","No steps yet. Build the swimlane first.")); return; }
+
+  var t=el("table","tt");
+  var thead=el("thead"), hr=el("tr");
+  ["","Step","Work","Wait","Parallel","Total",""].forEach(function(h){
+    var th=el("th",null,h); if(h==="Work"||h==="Wait"||h==="Total") th.style.textAlign="right";
+    hr.appendChild(th);
+  });
+  thead.appendChild(hr); t.appendChild(thead);
+  var tb=el("tbody"); var lastPhase=null; var n=0;
+
+  seq.forEach(function(s,i){
+    if(s.phase!==lastPhase){
+      lastPhase=s.phase;
+      var ptr=el("tr","phase"), ptd=el("td");
+      ptd.colSpan=7;
+      var p=phaseOf(s.phase);
+      var mins=0; seq.forEach(function(x){if(x.phase===s.phase&&!x.par)mins+=x.w+x.wait;});
+      ptd.textContent=(p?p.name:"Phase")+"  ·  "+fmtDays(mins)+" on the critical path";
+      ptr.appendChild(ptd); tb.appendChild(ptr);
+    }
+    n++;
+    var tr=el("tr");
+    tr.appendChild(el("td","num",String(n)));
+
+    var td=el("td");
+    var nm=el("div","sname",s.name); td.appendChild(nm);
+    var l=laneOf(s.lane);
+    var ln=el("div","slane");
+    var sw=el("i"); sw.style.background=l?l.color:"#ccc"; ln.appendChild(sw);
+    ln.appendChild(el("span",null,l?l.name:"unassigned"));
+    td.appendChild(ln);
+    td.style.cursor="pointer";
+    td.addEventListener("click",function(){state.sel=s.id; save(); go(1);});
+    tr.appendChild(td);
+
+    tr.appendChild(durCell(s.w,"w",function(v){s.w=v; save(); renderTimingLive();}));
+    tr.appendChild(durCell(s.wait,"q",function(v){s.wait=v; save(); renderTimingLive();}));
+
+    var ptd2=el("td"); ptd2.style.textAlign="center";
+    var pc=el("input"); pc.type="checkbox"; pc.checked=!!s.par; pc.style.width="auto";
+    pc.title="Runs in parallel, off the critical path";
+    pc.addEventListener("change",function(){s.par=pc.checked; save(); renderTiming(); renderTimingLive();});
+    ptd2.appendChild(pc); tr.appendChild(ptd2);
+
+    var tot=el("td","right"); tot.textContent=s.par?"—":fmt(s.w+s.wait);
+    if(s.par) tot.style.color="var(--muted)";
+    tr.appendChild(tot);
+
+    var ord=el("td");
+    var wrap=el("div","ord");
+    var up=el("button","btn xs alt","↑");
+    up.addEventListener("click",function(){moveSeq(s,-1);});
+    var dn=el("button","btn xs alt","↓");
+    dn.addEventListener("click",function(){moveSeq(s,1);});
+    wrap.appendChild(up); wrap.appendChild(dn); ord.appendChild(wrap); tr.appendChild(ord);
+
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);
+  box.appendChild(t);
+}
+function durCell(mins,kind,onchange){
+  var td=el("td"); td.style.textAlign="right";
+  var i=el("input","dur "+kind); i.type="text"; i.value=fmt(mins); i.placeholder="0";
+  i.addEventListener("input",function(){onchange(parseDur(i.value));});
+  i.addEventListener("blur",function(){i.value=fmt(parseDur(i.value));});
+  td.appendChild(i); return td;
+}
+function moveSeq(s,dir){
+  var i=state.steps.indexOf(s), j=i+dir;
+  if(j<0||j>=state.steps.length) return;
+  if(state.steps[j].phase!==s.phase) return;   /* keep phases contiguous */
+  state.steps.splice(i,1); state.steps.splice(j,0,s);
+  save(); renderTiming(); renderTimingLive();
+}
+/* redraw everything that depends on numbers but not the table itself */
+function renderTimingLive(){
+  rebuildSeq();
+  renderLead("leadCurrent","current");
+  renderTimeCards();
+  renderBreakdowns();
+  refreshHeader();
+}
+
+function renderLead(hostId,mode,scaleMax){
+  var host=byId(hostId); if(!host) return;
+  host.innerHTML="";
+  rebuildSeq();
+  var crit=critical();
+  var tot=(mode==="target")?targetTotals():totals();
+  var box=el("div","leadbox");
+
+  var head=el("div","leadhead");
+  head.appendChild(el("span","ttl",mode==="target"?"Target lead time":"Total lead time"));
+  var tot2=el("div","tot");
+  tot2.appendChild(el("b",null,fmtDays(tot.lead)));
+  tot2.appendChild(el("span",null,"  ·  "+fmtDays(tot.work)+" work, "+fmtDays(tot.wait)+" wait, "+pctStr(tot.eff)+" efficiency"));
+  head.appendChild(tot2);
+  box.appendChild(head);
+
+  var rail=el("div","leadrail");
+  var bar=el("div","lead");
+  var max=scaleMax||tot.lead||1;
+  var info=el("div","hoverinfo");
+
+  if(!crit.length){
+    bar.appendChild(el("div","empty","Nothing on the critical path yet."));
+  }
+  crit.forEach(function(s){
+    var t=(mode==="target")?targetOf(s):{w:s.w,wait:s.wait};
+    if(t.w>0){
+      var a=el("i","w"); a.style.width=(t.w/max*100)+"%";
+      a.title=s.name+" — work "+fmt(t.w);
+      hook(a,s,"work",t.w);
+      bar.appendChild(a);
+    }
+    if(t.wait>0){
+      var b=el("i","q"); b.style.width=(t.wait/max*100)+"%";
+      b.title=s.name+" — wait "+fmt(t.wait);
+      hook(b,s,"wait",t.wait);
+      bar.appendChild(b);
+    }
+  });
+  if(scaleMax&&tot.lead<max){
+    var pad=el("i"); pad.style.width=((max-tot.lead)/max*100)+"%"; pad.style.background="transparent";
+    bar.appendChild(pad);
+  }
+  rail.appendChild(bar);
+  box.appendChild(rail);
+
+  var ends=el("div","leadends");
+  ends.appendChild(el("span",null,"Request received"));
+  ends.appendChild(el("span",null,"All work completed"));
+  box.appendChild(ends);
+
+  /* scale ticks */
+  var days=max/D;
+  var ticks= days>60?10 : days>20?5 : days>5?1 : 0;
+  if(ticks){
+    var sc=el("div","scale");
+    var count=Math.ceil(days/ticks);
+    for(var k=0;k<count;k++){
+      var i2=el("i",null,(k*ticks)+"d");
+      i2.style.flex="0 0 "+((ticks*D)/max*100)+"%";
+      sc.appendChild(i2);
+    }
+    box.appendChild(sc);
+  }
+
+  function hook(node,s,kind,v){
+    node.addEventListener("mouseenter",function(){
+      var l=laneOf(s.lane);
+      info.innerHTML="";
+      info.appendChild(el("b",null,s.name));
+      info.appendChild(el("span",null,"  ·  "+(l?l.name:"")+"  ·  "+(kind==="work"?"work time ":"wait time ")+fmt(v)+
+        "  ·  "+pctStr(v/max*100)+" of the lead time"));
+    });
+    node.addEventListener("mouseleave",function(){info.textContent="";});
+  }
+
+  var lg=el("div","leadlegend");
+  var s1=el("span"); var d1=el("i","dot"); d1.style.background="var(--work)"; s1.appendChild(d1);
+  s1.appendChild(el("span",null,"Work time per task")); lg.appendChild(s1);
+  var s2=el("span"); var d2=el("i","dot"); d2.style.background="var(--wait)"; s2.appendChild(d2);
+  s2.appendChild(el("span",null,"Wait time")); lg.appendChild(s2);
+  lg.appendChild(el("span",null,crit.length+" steps on the critical path"));
+  box.appendChild(lg);
+  box.appendChild(info);
+
+  var par=parallel().map(function(s){
+    var t=(mode==="target")?targetOf(s):{w:s.w,wait:s.wait,gone:false};
+    return {s:s,t:t};
+  }).filter(function(r){ return !r.t.gone && (r.t.w>0||r.t.wait>0); });
+  if(par.length){
+    var pEffort=par.reduce(function(a,r){return a+r.t.w;},0);
+    var ps=el("div","parstrip");
+    ps.appendChild(el("div","ttl","Running in parallel, "+fmtDays(pEffort)+" of effort off the critical path"));
+    var pl2=el("div","parlist");
+    par.forEach(function(r){
+      pl2.appendChild(el("span",null,r.s.name+"  ·  "+fmt(r.t.w)+(r.t.wait?" +"+fmt(r.t.wait):"")));
+    });
+    ps.appendChild(pl2); box.appendChild(ps);
+  } else if(mode==="target"&&parallel().length){
+    var ps2=el("div","parstrip");
+    ps2.appendChild(el("div","ttl","Every parallel step is absorbed into the provisioning workflow"));
+    box.appendChild(ps2);
+  }
+  host.appendChild(box);
+}
+
+function card(lbl,val,sub,cls){
+  var c=el("div","score"+(cls?" "+cls:""));
+  c.appendChild(el("div","lbl",lbl));
+  c.appendChild(el("div","val",val));
+  if(sub) c.appendChild(el("div","sub",sub));
+  return c;
+}
+function renderTimeCards(){
+  var host=byId("timeCards"); host.innerHTML="";
+  var t=totals();
+  var g=el("div","scorecards");
+  g.appendChild(card("Total lead time",fmtDays(t.lead),critical().length+" steps on the critical path","hi"));
+  g.appendChild(card("Work time",fmtDays(t.work),"Hands on keyboard"));
+  g.appendChild(card("Wait and queue time",fmtDays(t.wait),(t.lead?pctStr(t.wait/t.lead*100):"0%")+" of the elapsed time"));
+  var effCard=card("Process efficiency",pctStr(t.eff),"Work time over lead time",t.eff>=60?"good":"hi");
+  var bar=el("div","bar");
+  var i1=el("i"); i1.style.cssText="background:var(--work);width:"+t.eff+"%";
+  var i2=el("i"); i2.style.cssText="background:var(--wait);width:"+(100-t.eff)+"%";
+  bar.appendChild(i1); bar.appendChild(i2); effCard.appendChild(bar);
+  g.appendChild(effCard);
+  g.appendChild(card("Teams involved",String(teamsInvolved("current")),"Handoffs cost queue time"));
+  host.appendChild(g);
+}
+function renderBreakdowns(){
+  bar("brkLane","lane"); bar("brkPhase","phase");
+  function bar(hostId,by){
+    var host=byId(hostId); if(!host) return;
+    host.innerHTML="";
+    rebuildSeq();
+    var keys=[],map={};
+    (by==="lane"?state.lanes:state.phases).forEach(function(x){keys.push(x.id); map[x.id]={w:0,q:0,n:0,name:x.name,color:x.color||"#9AA7B8"};});
+    seq.forEach(function(s){
+      var k=(by==="lane")?s.lane:s.phase;
+      if(!map[k]) return;
+      map[k].n++;
+      map[k].w+=s.w; map[k].q+=s.wait;
+    });
+    var max=0;
+    keys.forEach(function(k){max=Math.max(max,map[k].w+map[k].q);});
+    if(!max){ host.appendChild(el("div","empty","No timings entered yet.")); return; }
+    keys.sort(function(a,b){return (map[b].w+map[b].q)-(map[a].w+map[a].q);});
+    keys.forEach(function(k){
+      var m=map[k]; if(!m.n) return;
+      var row=el("div","brkrow");
+      var nm=el("div","nm");
+      var sw=el("i"); sw.style.background=(by==="lane")?m.color:"var(--brand)"; nm.appendChild(sw);
+      nm.appendChild(el("span",null,m.name));
+      row.appendChild(nm);
+      var b=el("div","brkbar");
+      var w=el("i","w"); w.style.width=(m.w/max*100)+"%"; w.title="work "+fmt(m.w);
+      var q=el("i","q"); q.style.width=(m.q/max*100)+"%"; q.title="wait "+fmt(m.q);
+      b.appendChild(w); b.appendChild(q); row.appendChild(b);
+      row.appendChild(el("div","amt",fmtDays(m.w+m.q)+"  ·  "+m.n+" step"+(m.n===1?"":"s")));
+      host.appendChild(row);
+    });
+  }
+}
+
+/* ======================= STEP 4: automation ======================= */
+function renderAuto(){
+  var box=byId("autoTable"); box.innerHTML="";
+  rebuildSeq();
+  var assessed=seq.filter(function(s){return s.lvl&&s.lvl!=="none";}).length;
+  byId("autoHint").textContent=seq.length?(assessed+" of "+seq.length+" steps mapped"):"";
+  if(!seq.length){ box.appendChild(el("div","empty","No steps yet. Build the swimlane first.")); return; }
+
+  var t=el("table","tt");
+  var thead=el("thead"), hr=el("tr");
+  ["","Step","VCF 9.1 capability","Effect","Effort","Time removed"].forEach(function(h){
+    var th=el("th",null,h); if(h==="Time removed") th.style.textAlign="right"; hr.appendChild(th);
+  });
+  thead.appendChild(hr); t.appendChild(thead);
+  var tb=el("tbody"), lastPhase=null, n=0;
+
+  seq.forEach(function(s){
+    if(s.phase!==lastPhase){
+      lastPhase=s.phase;
+      var ptr=el("tr","phase"), ptd=el("td"); ptd.colSpan=6;
+      var p=phaseOf(s.phase); ptd.textContent=p?p.name:"Phase";
+      ptr.appendChild(ptd); tb.appendChild(ptr);
+    }
+    n++;
+    var tr=el("tr");
+    tr.appendChild(el("td","num",String(n)));
+
+    var td=el("td");
+    td.appendChild(el("div","sname",s.name));
+    var l=laneOf(s.lane); var ln=el("div","slane");
+    var sw=el("i"); sw.style.background=l?l.color:"#ccc"; ln.appendChild(sw);
+    ln.appendChild(el("span",null,(l?l.name:"unassigned")+"  ·  "+fmt(s.w)+(s.wait?" +"+fmt(s.wait)+" wait":"")+(s.par?"  ·  parallel":"")));
+    td.appendChild(ln); tr.appendChild(td);
+
+    var ctd=el("td");
+    var cs=el("select","cap");
+    var opts=[["","Not assessed"]].concat(CAPS.map(function(c){return [c.id,c.name];}));
+    opts.forEach(function(o){var op=el("option",null,o[1]); op.value=o[0]; if(o[0]===s.cap)op.selected=true; cs.appendChild(op);});
+    cs.addEventListener("change",function(){
+      s.cap=cs.value; if(cs.value&&s.lvl==="none") s.lvl="full";
+      if(!cs.value) s.lvl="none";
+      save(); renderAuto(); renderSwim(); refreshHeader();
+    });
+    ctd.appendChild(cs);
+    if(s.cap&&CAPBY[s.cap]){
+      var h=el("div"); h.style.cssText="font-size:11.5px;color:var(--muted);margin-top:4px;max-width:46ch;line-height:1.4";
+      h.textContent=CAPBY[s.cap].how;
+      ctd.appendChild(h);
+    }
+    tr.appendChild(ctd);
+
+    var ltd=el("td");
+    var ls=el("select","lvl");
+    LVLS.forEach(function(o){var op=el("option",null,o.label); op.value=o.id; if(o.id===s.lvl)op.selected=true; ls.appendChild(op);});
+    ls.addEventListener("change",function(){s.lvl=ls.value; s.tw=null; s.twait=null; save(); renderAuto(); renderSwim(); refreshHeader();});
+    ltd.appendChild(ls); tr.appendChild(ltd);
+
+    var etd=el("td");
+    if(s.cap&&CAPBY[s.cap]){
+      var ef=CAPBY[s.cap].effort;
+      etd.appendChild(el("span","pill "+(ef==="Low"?"low":ef==="Medium"?"med":"high"),ef));
+    } else etd.appendChild(el("span","pill none","—"));
+    tr.appendChild(etd);
+
+    var tgt=targetOf(s);
+    var saved=(s.w+s.wait)-(tgt.w+tgt.wait);
+    var std=el("td","right");
+    if(s.par){ std.textContent="off path"; std.style.color="var(--muted)"; }
+    else if(saved>0){ std.textContent="−"+fmt(saved); std.style.color="var(--covered)"; }
+    else { std.textContent="—"; std.style.color="var(--muted)"; }
+    tr.appendChild(std);
+
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb); box.appendChild(t);
+
+  renderQuickWins(); renderCapCoverage();
+}
+function renderQuickWins(){
+  var host=byId("quickWins"); host.innerHTML="";
+  rebuildSeq();
+  var rows=[];
+  seq.forEach(function(s){
+    if(!s.cap||s.lvl==="none") return;
+    var t=targetOf(s);
+    var saved=(s.w+s.wait)-(t.w+t.wait);
+    if(saved<=0) return;
+    rows.push({s:s,saved:saved,cap:CAPBY[s.cap]});
+  });
+  if(!rows.length){ host.appendChild(el("div","empty","Map some steps to VCF 9.1 capabilities and the ranked quick wins appear here.")); return; }
+
+  /* group by capability: the win is implementing the capability once, not per step */
+  var byCap={};
+  rows.forEach(function(r){
+    var k=r.cap.id;
+    if(!byCap[k]) byCap[k]={cap:r.cap,saved:0,steps:[],onPath:0};
+    byCap[k].saved+=r.s.par?0:r.saved;
+    if(!r.s.par) byCap[k].onPath+=r.saved;
+    byCap[k].steps.push(r.s.name);
+  });
+  var list=Object.keys(byCap).map(function(k){return byCap[k];});
+  var effortRank={Low:1,Medium:2,High:3};
+  list.sort(function(a,b){
+    var ea=effortRank[a.cap.effort]||2, eb=effortRank[b.cap.effort]||2;
+    var va=a.saved/ea, vb=b.saved/eb;
+    return vb-va;
+  });
+  list.forEach(function(r,i){
+    var row=el("div","qw");
+    row.appendChild(el("span","rank","#"+(i+1)));
+    var mid=el("div");
+    mid.appendChild(el("div","qname",r.cap.name));
+    var meta=el("div","qmeta");
+    meta.appendChild(el("span",null,r.steps.length+" step"+(r.steps.length===1?"":"s")+": "+r.steps.slice(0,3).join(", ")+(r.steps.length>3?" and "+(r.steps.length-3)+" more":"")));
+    mid.appendChild(meta);
+    var eff=el("div"); eff.style.marginTop="6px";
+    eff.appendChild(el("span","pill "+(r.cap.effort==="Low"?"low":"med"),r.cap.effort+" effort"));
+    mid.appendChild(eff);
+    row.appendChild(mid);
+    var sv=el("div","qsave");
+    if(r.saved>0){
+      sv.appendChild(el("b",null,"−"+fmtDays(r.saved)));
+      sv.appendChild(el("span",null,"off the lead time"));
+    } else {
+      var b0=el("b",null,"off path"); b0.style.color="var(--muted)"; sv.appendChild(b0);
+      sv.appendChild(el("span",null,"returns effort, not lead time"));
+    }
+    row.appendChild(sv);
+    host.appendChild(row);
+  });
+}
+function renderCapCoverage(){
+  var host=byId("capCoverage"); host.innerHTML="";
+  var used={};
+  seq.forEach(function(s){ if(s.cap&&s.lvl!=="none"){ used[s.cap]=(used[s.cap]||0)+1; } });
+  var keys=Object.keys(used);
+  if(!keys.length){ host.appendChild(el("div","empty","No capabilities mapped yet.")); return; }
+  var max=0; keys.forEach(function(k){max=Math.max(max,used[k]);});
+  CAPS.forEach(function(c){
+    if(!used[c.id]) return;
+    var row=el("div","brkrow");
+    var nm=el("div","nm");
+    var sw=el("i"); sw.style.background="var(--auto)"; nm.appendChild(sw);
+    nm.appendChild(el("span",null,c.name));
+    row.appendChild(nm);
+    var b=el("div","brkbar");
+    var w=el("i","w"); w.style.cssText="background:var(--auto);width:"+(used[c.id]/max*100)+"%";
+    b.appendChild(w); row.appendChild(b);
+    row.appendChild(el("div","amt",used[c.id]+" step"+(used[c.id]===1?"":"s")+"  ·  "+c.effort));
+    host.appendChild(row);
+  });
+}
+function suggestMappings(){
+  /* keyword driven first pass, only fills steps that are not already mapped */
+  var rules=[
+    [/catalog|itsm form|request form|submit|raise a? ?ticket|create request|proposal/i,"cat","full"],
+    [/approv|sign off|authoris|authoriz/i,"appr","full"],
+    [/security impact|sia|risk assessment|security review|security policy/i,"sectag","full"],
+    [/cab|ccb|change record|change request|change approval|remedy|provisioning task/i,"itsmchg","full"],
+    [/blueprint|template author|golden image/i,"nscap","full"],
+    [/clone|deploy vm|build vm|create vm|vcpu|vram|sizing|storage location|cluster|vm name|rename|customi[sz]/i,"day1","full"],
+    [/ip address|dns|ipam/i,"ipam","full"],
+    [/\bad\b|active directory|domain join|\bou\b/i,"ad","full"],
+    [/monitor|nagios|agent|patch|scan|tenable|qualys|sentinel|crowdstrike|antivirus|software|cots/i,"day2mon","full"],
+    [/backup|snapcenter|commvault|veeam/i,"bkp","full"],
+    [/cmdb|\bci\b|atrium|configuration item/i,"cmdb","full"],
+    [/close|notify|notification|inform requester|complete/i,"close","full"]
+  ];
+  var n=0;
+  seq.forEach(function(s){
+    if(s.cap) return;
+    for(var i=0;i<rules.length;i++){
+      if(rules[i][0].test(s.name)){ s.cap=rules[i][1]; s.lvl=rules[i][2]; s.tw=null; s.twait=null; n++; return; }
+    }
+  });
+  save(); renderAuto(); renderSwim(); refreshHeader();
+  flash(n?("Mapped "+n+" step"+(n===1?"":"s")+", review each one"):"Nothing new to suggest");
+}
+
+/* ======================= STEP 5: target state ======================= */
+function renderTarget(){
+  rebuildSeq();
+  var cur=totals(), tgt=targetTotals();
+  var scale=Math.max(cur.lead,tgt.lead,1);
+  renderLead("leadCmpCur","current",scale);
+  renderLead("leadCmpTgt","target",scale);
+
+  var host=byId("cmpCards"); host.innerHTML="";
+  var g=el("div","scorecards");
+  var cut=cur.lead?((cur.lead-tgt.lead)/cur.lead*100):0;
+  g.appendChild(card("Lead time removed",pctStr(cut),fmtDays(cur.lead)+" down to "+fmtDays(tgt.lead),"good"));
+  g.appendChild(card("Target lead time",fmtDays(tgt.lead),"Request submitted to VM delivered"));
+  g.appendChild(card("Steps eliminated",String(tgt.gone),"of "+seq.length+" steps in the current process"));
+  g.appendChild(card("Target efficiency",pctStr(tgt.eff),"Work time over lead time",tgt.eff>=60?"good":""));
+  var perYear=parseFloat(state.meta.volume||"0")*12;
+  if(perYear>0){
+    var savedHrs=((cur.effort-tgt.effort)/60)*parseFloat(state.meta.volume||"0")*12;
+    g.appendChild(card("Engineer hours a year",Math.round(savedHrs).toLocaleString(),"Returned at "+state.meta.volume+" requests a month","good"));
+  }
+  host.appendChild(g);
+
+  /* comparison table */
+  var t=byId("cmpTable"); t.innerHTML="";
+  var thead=el("thead"),hr=el("tr");
+  ["Metric","Current state","Target with VCF 9.1","Change"].forEach(function(h){hr.appendChild(el("th",null,h));});
+  thead.appendChild(hr); t.appendChild(thead);
+  var tb=el("tbody");
+  function row(metric,c,tg,change){
+    var tr=el("tr");
+    tr.appendChild(el("td","metric",metric));
+    tr.appendChild(el("td","cur",c));
+    tr.appendChild(el("td","tgt",tg));
+    tr.appendChild(el("td","red",change));
+    tb.appendChild(tr);
+  }
+  function red(a,b){ if(!a) return "—"; var p=(a-b)/a*100; return (p>=0?"−":"+")+Math.abs(Math.round(p))+"%"; }
+  row("Total lead time",fmtDays(cur.lead),fmtDays(tgt.lead),red(cur.lead,tgt.lead));
+  row("Active work time",fmtDays(cur.work),fmtDays(tgt.work),red(cur.work,tgt.work));
+  row("Wait and queue time",fmtDays(cur.wait),fmtDays(tgt.wait),red(cur.wait,tgt.wait));
+  row("Process efficiency",pctStr(cur.eff),pctStr(tgt.eff),(Math.round(tgt.eff-cur.eff)>=0?"+":"")+Math.round(tgt.eff-cur.eff)+" points");
+  row("Teams involved",String(teamsInvolved("current")),String(teamsInvolved("target")),red(teamsInvolved("current"),teamsInvolved("target")));
+  row("Manual steps",String(manualSteps("current")),String(manualSteps("target")),red(manualSteps("current"),manualSteps("target")));
+  row("Total engineer effort per request",fmtDays(cur.effort),fmtDays(tgt.effort),red(cur.effort,tgt.effort));
+  t.appendChild(tb);
+
+  /* residual */
+  var rhost=byId("residual"); rhost.innerHTML="";
+  var left=[];
+  critical().forEach(function(s){
+    var x=targetOf(s);
+    if(x.gone) return;
+    if(x.w+x.wait<=0) return;
+    left.push({s:s,m:x.w+x.wait,x:x});
+  });
+  left.sort(function(a,b){return b.m-a.m;});
+  if(!left.length) rhost.appendChild(el("div","empty","Nothing left on the critical path. Check the mappings, that is rarely true."));
+  left.slice(0,8).forEach(function(r,i){
+    var row2=el("div","qw");
+    row2.appendChild(el("span","rank","#"+(i+1)));
+    var mid=el("div");
+    mid.appendChild(el("div","qname",r.s.name));
+    var l=laneOf(r.s.lane);
+    mid.appendChild(el("div","qmeta",(l?l.name:"")+"  ·  "+LVLWORD[r.s.lvl]+(r.s.cap&&CAPBY[r.s.cap]?"  ·  "+CAPBY[r.s.cap].name:"")));
+    row2.appendChild(mid);
+    var sv=el("div","qsave");
+    sv.appendChild(el("b",null,fmt(r.m)));
+    sv.appendChild(el("span",null,tgt.lead?pctStr(r.m/tgt.lead*100)+" of the target lead time":""));
+    sv.querySelector("b").style.color="var(--partial)";
+    row2.appendChild(sv);
+    rhost.appendChild(row2);
+  });
+
+  /* eliminated */
+  var ul=byId("elimList"); ul.innerHTML="";
+  var any=false;
+  seq.forEach(function(s){
+    if(s.lvl!=="remove"&&s.lvl!=="full") return;
+    any=true;
+    var li=el("li");
+    li.appendChild(el("span","pill "+(s.lvl==="remove"?"remove":"full"),s.lvl==="remove"?"Gone":"Automated"));
+    var d=el("div");
+    d.appendChild(el("div","fname",s.name));
+    var l=laneOf(s.lane);
+    d.appendChild(el("div","fsub",(l?l.name+"  ·  ":"")+(s.cap&&CAPBY[s.cap]?"Replaced by "+CAPBY[s.cap].name:"No capability recorded")+
+      "  ·  was "+fmt(s.w+s.wait)));
+    li.appendChild(d);
+    ul.appendChild(li);
+  });
+  if(!any) ul.appendChild(el("li",null,"Nothing marked as automated or eliminated yet."));
+
+  /* roadmap */
+  var rd=byId("roadmap"); rd.innerHTML="";
+  ROADMAP.forEach(function(p){
+    var box=el("div","roadphase");
+    var rh=el("div","rh");
+    rh.appendChild(el("b",null,p.name));
+    rh.appendChild(el("span","wk",p.weeks));
+    var owner=el("input"); owner.type="text"; owner.placeholder="Owner or start date";
+    owner.value=(state.road[p.id]&&state.road[p.id].owner)||"";
+    owner.addEventListener("input",function(){
+      if(!state.road[p.id]) state.road[p.id]={owner:"",items:{}};
+      state.road[p.id].owner=owner.value; save();
+    });
+    rh.appendChild(owner);
+    box.appendChild(rh);
+    var checks=el("div","checks");
+    p.items.forEach(function(it,idx){
+      var key=p.id+"_"+idx;
+      var lab=el("label","chk");
+      var cb=el("input"); cb.type="checkbox";
+      cb.checked=!!(state.road[p.id]&&state.road[p.id].items&&state.road[p.id].items[key]);
+      if(cb.checked) lab.classList.add("sel");
+      cb.addEventListener("change",function(){
+        if(!state.road[p.id]) state.road[p.id]={owner:"",items:{}};
+        if(!state.road[p.id].items) state.road[p.id].items={};
+        state.road[p.id].items[key]=cb.checked;
+        lab.classList.toggle("sel",cb.checked); save();
+      });
+      lab.appendChild(cb); lab.appendChild(el("span",null,it));
+      checks.appendChild(lab);
+    });
+    box.appendChild(checks);
+    rd.appendChild(box);
+  });
+}
+
+/* ======================= STEP 6: findings ======================= */
+function renderFindings(){
+  var host=byId("findings"); host.innerHTML="";
+  rebuildSeq();
+  var cur=totals(), tgt=targetTotals();
+
+  if(!seq.length){
+    host.appendChild(el("div","empty","Nothing captured yet. Build the swimlane in step 2."));
+    return;
+  }
+
+  var g=el("div","scorecards");
+  g.appendChild(card("Current lead time",fmtDays(cur.lead),seq.length+" steps, "+teamsInvolved("current")+" teams","hi"));
+  g.appendChild(card("Process efficiency",pctStr(cur.eff),fmtDays(cur.wait)+" of it is queue time"));
+  g.appendChild(card("Target lead time",fmtDays(tgt.lead),"With VCF 9.1 automation","good"));
+  g.appendChild(card("Lead time removed",cur.lead?pctStr((cur.lead-tgt.lead)/cur.lead*100):"—",fmtDays(cur.lead-tgt.lead)+" saved per request","good"));
+  host.appendChild(g);
+
+  /* biggest queues */
+  var p1=el("div","panel");
+  var ph=el("div","panel-head"); ph.appendChild(el("h2",null,"The five longest waits in the current process"));
+  p1.appendChild(ph);
+  var waits=critical().slice().filter(function(s){return s.wait>0;}).sort(function(a,b){return b.wait-a.wait;}).slice(0,5);
+  if(!waits.length) p1.appendChild(el("div","empty","No wait time recorded."));
+  waits.forEach(function(s,i){
+    var row=el("div","qw");
+    row.appendChild(el("span","rank","#"+(i+1)));
+    var mid=el("div");
+    mid.appendChild(el("div","qname",s.name));
+    var l=laneOf(s.lane), p=phaseOf(s.phase);
+    mid.appendChild(el("div","qmeta",(l?l.name:"")+"  ·  "+(p?p.name:"")+"  ·  "+(s.cap&&CAPBY[s.cap]?CAPBY[s.cap].name:"no capability mapped yet")));
+    row.appendChild(mid);
+    var sv=el("div","qsave");
+    var b=el("b",null,fmt(s.wait)); b.style.color="var(--gap)"; sv.appendChild(b);
+    sv.appendChild(el("span",null,cur.lead?pctStr(s.wait/cur.lead*100)+" of the lead time":""));
+    row.appendChild(sv);
+    p1.appendChild(row);
+  });
+  host.appendChild(p1);
+
+  /* narrative */
+  var p2=el("div","panel");
+  var ph2=el("div","panel-head"); ph2.appendChild(el("h2",null,"Summary"));
+  var tools=el("div","tools");
+  var cb=el("button","btn ghost sm","Copy to clipboard");
+  ph2.appendChild(tools); tools.appendChild(cb);
+  p2.appendChild(ph2);
+  var body=el("div","panel-body");
+  var txt=narrative(cur,tgt);
+  var pre=el("div","summary-box",txt);
+  body.appendChild(pre); p2.appendChild(body);
+  cb.addEventListener("click",function(){
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt); flash("Summary copied");}
+      else{var ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta); flash("Summary copied");}
+    }catch(e){flash("Could not copy");}
+  });
+  host.appendChild(p2);
+
+  /* exports */
+  var p3=el("div","panel");
+  var ph3=el("div","panel-head"); ph3.appendChild(el("h2",null,"Export")); p3.appendChild(ph3);
+  var b3=el("div","panel-body");
+  var ex=el("div","exports");
+  var e1=el("button","btn alt","Download CSV"); e1.addEventListener("click",exportCSV); ex.appendChild(e1);
+  var e2=el("button","btn alt","Download JSON"); e2.addEventListener("click",exportJSON); ex.appendChild(e2);
+  var e3=el("button","btn alt","Print or save as PDF"); e3.addEventListener("click",function(){window.print();}); ex.appendChild(e3);
+  b3.appendChild(ex);
+  var nt=el("div","note"); nt.style.marginTop="14px";
+  nt.textContent="The JSON export reloads into this page with everything intact, so you can finish the assessment later or hand it to a colleague. The CSV is one row per step, ready for a spreadsheet.";
+  b3.appendChild(nt);
+  p3.appendChild(b3);
+  host.appendChild(p3);
+}
+
+function narrative(cur,tgt){
+  var m=state.meta, L=[];
+  var acct=m.account||"the customer";
+  L.push("SERVICE REQUEST MANAGEMENT ASSESSMENT");
+  L.push(acct+(m.date?"  |  "+m.date:"")+(m.consultant?"  |  "+m.consultant:""));
+  L.push("Service mapped: "+(m.service||"VM provisioning"));
+  L.push("");
+  L.push("CURRENT STATE");
+  L.push("Lead time is "+fmtDays(cur.lead)+" across "+seq.length+" steps and "+teamsInvolved("current")+" teams.");
+  L.push("Of that, "+fmtDays(cur.work)+" is active work and "+fmtDays(cur.wait)+" is queue time,");
+  L.push("a process efficiency of "+pctStr(cur.eff)+". "+pctStr(100-cur.eff)+" of the elapsed time is waiting,");
+  L.push("and none of it is inherent to the technical work.");
+  if(m.quoted) L.push("The team quoted "+m.quoted+" before the process was mapped.");
+  L.push("");
+  var waits=critical().slice().filter(function(s){return s.wait>0;}).sort(function(a,b){return b.wait-a.wait;}).slice(0,3);
+  if(waits.length){
+    L.push("WHERE THE TIME GOES");
+    waits.forEach(function(s){
+      var l=laneOf(s.lane);
+      L.push("  • "+s.name+" ("+(l?l.name:"")+"): "+fmt(s.wait)+" of queue time, "+
+        (cur.lead?pctStr(s.wait/cur.lead*100):"")+" of the lead time.");
+    });
+    L.push("");
+  }
+  L.push("TARGET STATE WITH VCF 9.1");
+  L.push("Lead time falls to "+fmtDays(tgt.lead)+", a reduction of "+
+    (cur.lead?Math.round((cur.lead-tgt.lead)/cur.lead*100):0)+"%.");
+  L.push(tgt.gone+" steps disappear entirely and "+teamsInvolved("target")+" teams remain involved.");
+  L.push("Process efficiency moves from "+pctStr(cur.eff)+" to "+pctStr(tgt.eff)+".");
+  var vol=parseFloat(m.volume||"0");
+  if(vol>0){
+    L.push("At "+vol+" requests a month that is "+
+      Math.round(((cur.effort-tgt.effort)/60)*vol*12).toLocaleString()+" engineer hours returned a year.");
+  }
+  L.push("");
+  var caps={};
+  seq.forEach(function(s){ if(s.cap&&s.lvl!=="none") caps[s.cap]=1; });
+  var ck=Object.keys(caps);
+  if(ck.length){
+    L.push("CAPABILITIES REQUIRED ("+ck.length+")");
+    CAPS.forEach(function(c){ if(caps[c.id]) L.push("  • "+c.name+" ["+c.effort+" effort]"); });
+    L.push("");
+  }
+  var res=critical().map(function(s){return {s:s,m:targetOf(s).w+targetOf(s).wait,g:targetOf(s).gone};})
+    .filter(function(r){return !r.g&&r.m>0;}).sort(function(a,b){return b.m-a.m;});
+  if(res.length){
+    L.push("WHAT STILL COSTS TIME IN THE TARGET STATE");
+    res.slice(0,3).forEach(function(r){
+      L.push("  • "+r.s.name+": "+fmt(r.m)+" ("+LVLWORD[r.s.lvl]+")");
+    });
+    L.push("");
+  }
+  if(m.pain){ L.push("STATED PAIN POINT"); L.push("  "+m.pain); L.push(""); }
+  L.push("NEXT STEPS");
+  L.push("  1. Phase 1, weeks 1 to 4: catalog item, approval policy, ITSM integration, Namespace Capture against existing reference VMs.");
+  L.push("  2. Phase 2, weeks 5 to 10: day-1 blueprints with Fast-Deploy, IPAM and Active Directory integration, security and monitoring day-2 actions.");
+  L.push("  3. Phase 3, weeks 11 to 16: backup registration, CMDB CI creation, ticket auto-closure, lifecycle day-2 actions.");
+  return L.join("\n");
+}
+
+/* ======================= EXPORT ======================= */
+function slug(){
+  var a=(state.meta.account||"account").toLowerCase().replace(/[^a-z0-9]+/g,"_").replace(/^_|_$/g,"");
+  return a||"account";
+}
+function download(name,mime,text){
+  var b=new Blob([text],{type:mime}), u=URL.createObjectURL(b), a=document.createElement("a");
+  a.href=u; a.download=name; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(u);},1500);
+}
+function exportCSV(){
+  rebuildSeq();
+  var rows=[];
+  rows.push(["Account","Date","Consultant","Service"].map(esc).join(","));
+  rows.push([state.meta.account||"",state.meta.date||"",state.meta.consultant||"",state.meta.service||""].map(esc).join(","));
+  rows.push("");
+  rows.push(["Seq","Phase","Team","Step","Work (min)","Wait (min)","Parallel","Total (min)",
+    "VCF 9.1 capability","Effort","Effect","Target work (min)","Target wait (min)","Time removed (min)","Notes"].map(esc).join(","));
+  seq.forEach(function(s,i){
+    var t=targetOf(s), l=laneOf(s.lane), p=phaseOf(s.phase), c=CAPBY[s.cap];
+    rows.push([i+1,p?p.name:"",l?l.name:"",s.name,s.w,s.wait,s.par?"yes":"no",s.w+s.wait,
+      c?c.name:"",c?c.effort:"",LVLWORD[s.lvl]||"",t.w,t.wait,(s.w+s.wait)-(t.w+t.wait),s.note||""].map(esc).join(","));
+  });
+  rows.push("");
+  var cur=totals(),tgt=targetTotals();
+  rows.push(["Metric","Current (min)","Target (min)"].map(esc).join(","));
+  rows.push(["Lead time",cur.lead,tgt.lead].join(","));
+  rows.push(["Work time",cur.work,tgt.work].join(","));
+  rows.push(["Wait time",cur.wait,tgt.wait].join(","));
+  rows.push(["Process efficiency %",Math.round(cur.eff),Math.round(tgt.eff)].join(","));
+  rows.push(["Teams involved",teamsInvolved("current"),teamsInvolved("target")].join(","));
+  download(slug()+"_srm_discovery.csv","text/csv;charset=utf-8",rows.join("\n"));
+  flash("CSV downloaded");
+}
+function exportJSON(){
+  download(slug()+"_srm_discovery.json","application/json",
+    JSON.stringify({tool:"vcf_srm_discovery",version:1,saved:new Date().toISOString(),state:state},null,2));
+  flash("JSON downloaded");
+}
+
+/* ======================= NAV AND SHELL ======================= */
+var STEPS=[
+  {label:"Context",count:function(){var n=0; META_IDS.forEach(function(k){if(state.meta[k])n++;}); return n+state.tools.length;}},
+  {label:"Swimlane",count:function(){return state.steps.length;}},
+  {label:"Timing",count:function(){return seq.filter(function(s){return s.w>0||s.wait>0;}).length;}},
+  {label:"Automation",count:function(){return seq.filter(function(s){return s.cap&&s.lvl!=="none";}).length;}},
+  {label:"Target state",count:function(){return targetTotals().gone;}},
+  {label:"Findings",count:function(){return seq.length;}}
+];
+function renderNav(){
+  var n=byId("nav"); n.innerHTML="";
+  STEPS.forEach(function(s,i){
+    var b=el("button");
+    if(i===state.step) b.className="on";
+    var num=el("span","num",String(i+1)); b.appendChild(num);
+    b.appendChild(el("span",null,s.label));
+    var c=s.count();
+    if(c) { b.appendChild(el("span","cnt",String(c))); b.classList.add("done"); }
+    if(i===state.step) b.classList.remove("done"), b.classList.add("on");
+    b.addEventListener("click",function(){go(i);});
+    n.appendChild(b);
+  });
+}
+function refreshHeader(){
+  rebuildSeq();
+  var t=totals();
+  var p=byId("posture").children;
+  var tot=t.lead||1;
+  p[0].style.width=(t.work/tot*100)+"%";
+  p[1].style.width=(t.wait/tot*100)+"%";
+  byId("lgW").textContent=fmtDays(t.work);
+  byId("lgQ").textContent=fmtDays(t.wait);
+  byId("lgT").textContent=fmtDays(t.lead);
+  byId("lgE").textContent=pctStr(t.eff);
+  byId("lgS").textContent=String(seq.length);
+  byId("hAcct").textContent=state.meta.account||"No account set";
+  byId("hDate").textContent=[state.meta.date,state.meta.consultant].filter(Boolean).join("  ·  ");
+  renderNav();
+}
+function go(i){
+  if(i<0||i>=STEPS.length) return;
+  state.step=i; save();
+  var secs=document.querySelectorAll(".step");
+  for(var k=0;k<secs.length;k++) secs[k].classList.toggle("on",+secs[k].dataset.step===i);
+  byId("btnPrev").disabled=(i===0);
+  byId("btnNext").textContent=(i===STEPS.length-1)?"Done":"Next";
+  byId("btnNext").disabled=(i===STEPS.length-1);
+  if(i===1){renderLaneBar();renderPhaseBar();renderSwim();renderEditor();}
+  if(i===2){renderTiming();renderTimingLive();}
+  if(i===3){renderAuto();}
+  if(i===4){renderTarget();}
+  if(i===5){renderFindings();}
+  refreshHeader();
+  window.scrollTo(0,0);
+}
+function renderAll(){
+  renderLaneBar(); renderPhaseBar(); renderSwim(); renderEditor();
+  renderTiming(); renderTimingLive();
+  renderAuto();
+  if(state.step===4) renderTarget();
+  if(state.step===5) renderFindings();
+  refreshHeader();
+}
+
+function bindMeta(){
+  META_IDS.forEach(function(k){
+    var n=byId("m_"+k); if(!n) return;
+    n.value=state.meta[k]||"";
+    var ev=(n.tagName==="SELECT")?"change":"input";
+    n.addEventListener(ev,function(){
+      state.meta[k]=n.value; save();
+      if(k==="account"||k==="date"||k==="consultant") refreshHeader();
+      if(k==="volume"&&state.step===4) renderTarget();
+    });
+  });
+}
+function loadTemplate(){
+  state.lanes=JSON.parse(JSON.stringify(TEMPLATE.lanes));
+  state.phases=JSON.parse(JSON.stringify(TEMPLATE.phases));
+  state.steps=TEMPLATE.steps.map(function(t,i){
+    return {id:"t"+i,lane:t[0],phase:t[1],name:t[2],w:t[3],wait:t[4],par:!!t[5],
+      cap:t[6]||"",lvl:t[7]||"none",tw:null,twait:null,note:""};
+  });
+  state.sel=null; save(); renderAll();
+  flash("Baseline template loaded");
+}
+
+/* ---- wire up ---- */
+byId("btnNext").addEventListener("click",function(){go(state.step+1);});
+byId("btnPrev").addEventListener("click",function(){go(state.step-1);});
+byId("btnAddLane").addEventListener("click",function(){
+  state.lanes.push({id:uid("l"),name:"New team",color:PALETTE[state.lanes.length%PALETTE.length]});
+  save(); renderAll();
+});
+byId("btnAddPhase").addEventListener("click",function(){
+  state.phases.push({id:uid("p"),name:"New phase"});
+  save(); renderAll();
+});
+byId("btnTemplate").addEventListener("click",function(){
+  if(state.steps.length&&!confirm("Replace the current swimlane with the baseline template?")) return;
+  loadTemplate();
+});
+byId("btnClearSwim").addEventListener("click",function(){
+  if(!confirm("Clear all teams, phases and steps?")) return;
+  state.lanes=[]; state.phases=[]; state.steps=[]; state.sel=null; save(); renderAll();
+});
+byId("btnGoSwim").addEventListener("click",function(){go(1);});
+byId("btnSuggest").addEventListener("click",suggestMappings);
+byId("btnBlank").addEventListener("click",function(){
+  if(!confirm("Clear everything and start again? This cannot be undone.")) return;
+  localStorage.removeItem(KEY);
+  state=blankState(); state.meta.date=today();
+  bindMetaValues(); renderTools(); renderAll(); go(0);
+  flash("Started blank");
+});
+byId("btnLoad").addEventListener("click",function(){byId("fileIn").click();});
+byId("fileIn").addEventListener("change",function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var p=JSON.parse(r.result);
+      var s=p.state||p;
+      if(!s||!s.steps) throw new Error("bad file");
+      state=normalizeState(s);
+      save(); bindMetaValues(); renderTools(); renderAll(); go(state.step||0);
+      flash("Loaded "+f.name);
+    }catch(err){ alert("That file could not be read as a saved assessment."); }
+  };
+  r.readAsText(f);
+  e.target.value="";
+});
+function bindMetaValues(){
+  META_IDS.forEach(function(k){ var n=byId("m_"+k); if(n) n.value=state.meta[k]||""; });
+}
+document.addEventListener("click",function(ev){
+  /* clicking outside the grid clears the selection */
+  if(state.step!==1||!state.sel) return;
+  var t=ev.target;
+  if(!t||!t.closest) return;
+  /* a redraw during this click detaches the node we were handed, which is not a click outside */
+  if(t.isConnected===false) return;
+  if(t.closest(".chip")||t.closest(".editor")||t.closest(".lanebar")||t.closest(".swim")||t.closest(".panel-head")) return;
+  state.sel=null; renderSwim(); renderEditor();
+});
+
+/* ---- boot ---- */
+if(!load()){
+  state=blankState();
+  state.meta.date=today();
+}
+if(!state.meta.date) state.meta.date=today();
+bindMeta();
+renderTools();
+rebuildSeq();
+renderAll();
+go(state.step||0);
+
+})();
+</script>
+</body>
+</html>
